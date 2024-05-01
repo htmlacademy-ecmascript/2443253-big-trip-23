@@ -15,22 +15,23 @@ export default class TripPresenter {
   sortComponent = new SortListView();
   formCreateComponent = new FormCreateView();
   tripEventListComponent = new TripEventListView();
-  tripFormEditComponent = new FormEditView();
 
 
-  constructor({elementContainer }) {
+  constructor({elementContainer,pointsModel}) {
     this.elementContainer = elementContainer;
+    this.pointsModel = pointsModel;
   }
 
   init() {
+    const tripPoints = [...this.pointsModel.getPoints()];
     render(this.filterComponent, filterListContainer);
     render(this.sortComponent, tripEventsContainer);
     render(this.formCreateComponent, tripEventsContainer);
     render(this.tripEventListComponent, tripEventsContainer);
-    render(this.tripFormEditComponent, this.tripEventListComponent.getElement());
+    render(new FormEditView({point : tripPoints[0]}), this.tripEventListComponent.getElement());
 
-    for (let i = 0; i < 3; i++) {
-      render(new TripEventView(), this.tripEventListComponent.getElement());
+    for (let i = 0; i < tripPoints.length; i++) {
+      render(new TripEventView({point : tripPoints[i]}), this.tripEventListComponent.getElement());
     }
   }
 }
