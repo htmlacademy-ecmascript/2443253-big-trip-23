@@ -16,5 +16,10 @@ const DESTIRNATIONS = [
   {name:'Путешествие на Алтай (Россия) ',town:'Gorno-altaysk',foto:'img/photos/5.jpg'},
 ];
 
-
-export {EVENT_TYPES,OFFERS,DESTIRNATIONS};
+const FilterType = {
+  EVERYTHING: 'everything',
+  FUTURE: 'future',
+  PRESENT: 'present',
+  PAST: 'past',
+};
+export {EVENT_TYPES,OFFERS,DESTIRNATIONS,FilterType};

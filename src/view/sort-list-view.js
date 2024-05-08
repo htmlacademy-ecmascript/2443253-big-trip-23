@@ -1,37 +1,24 @@
-import {createElement} from '../render.js';
-import {capitalize} from '../utils.js';
+import AbstractView from '../framework/view/abstract-view.js';
+import {capitalize} from '..//utils/point.js';
 
-const SORT_TYPES = ['day', 'event', 'time', 'price','offer'];
-const STATES_SORT = ['', 'disabled', '', 'checked','disabled'];
+export default class SortListView extends AbstractView{
 
-function createSortItemTemplate(sortingType, state = '') {
-  return `<div class="trip-sort__item  trip-sort__item--${sortingType}">
-  <input id="sort-${sortingType}" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="sort-${sortingType}"  ${state}>
-  <label class="trip-sort__btn" for="sort-${sortingType}">${capitalize(sortingType)}</label>
-</div>`;
-}
+  #SORT_TYPES = ['day', 'event', 'time', 'price','offer'];
+  #STATES_SORT = ['', 'disabled', '', 'checked','disabled'];
 
-function createSortTemplate() {
-  return `<form class="trip-events__trip-sort  trip-sort" action="#" method="get">
-  ${SORT_TYPES.map((element,index) => createSortItemTemplate(element,STATES_SORT[index])).join('')
-}
-</form>`;
-}
-
-export default class SortListView {
-  getTemplate() {
-    return createSortTemplate();
+  #createSortItemTemplate(sortingType, state = '') {
+    return `<div class="trip-sort__item  trip-sort__item--${sortingType}">
+    <input id="sort-${sortingType}" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="sort-${sortingType}"  ${state}>
+    <label class="trip-sort__btn" for="sort-${sortingType}">${capitalize(sortingType)}</label>
+  </div>`;
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
+  get template() {
+    return `<form class="trip-events__trip-sort  trip-sort" action="#" method="get">
+    ${this.#SORT_TYPES.map((element,index) => this.#createSortItemTemplate(element,this.#STATES_SORT[index])).join('')
+}
+  </form>`;
 
-    return this.element;
   }
 
-  removeElement() {
-    this.element = null;
-  }
 }
