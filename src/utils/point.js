@@ -30,5 +30,12 @@ function isPointExpired(dateTo) {
   return dateTo.isBefore(now);
 }
 
+function comparePrice(a,b){
+  return parseFloat(b.basePrice) - parseFloat(a.basePrice);
+}
+function compareTime(a,b){
+  return parseFloat(b.basePrice) - parseFloat(a.basePrice);
+}
 
-export{humanizeDate,humanizeTime,capitalize,isPointToday, isPointWillBe, isPointExpired};
+
+export{humanizeDate,humanizeTime,capitalize,isPointToday, isPointWillBe, isPointExpired,comparePrice,compareTime};
