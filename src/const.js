@@ -22,4 +22,11 @@ const FilterType = {
   PRESENT: 'present',
   PAST: 'past',
 };
-export {EVENT_TYPES,OFFERS,DESTIRNATIONS,FilterType};
+const SortType = {
+  DAY:'day',
+  EVENT:'event',
+  TIME:'time',
+  PRICE:'price',
+  OFFER:'offer'};
+
+export {EVENT_TYPES,OFFERS,DESTIRNATIONS,FilterType,SortType};

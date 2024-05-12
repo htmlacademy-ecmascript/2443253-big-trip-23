@@ -9,6 +9,7 @@ import FilterListView from '../view/filter-list-view.js';
 import {render,replace} from '../framework/render.js';
 import {BLANK_POINT} from '../model/points-model.js';
 import {generateFilter} from '../mock/filter.js';
+import {generateSorter} from '../mock/sort.js';
 
 
 export default class TripPresenter {
@@ -19,12 +20,11 @@ export default class TripPresenter {
   #pointsModel = null;
   #tripPoints = [];
   #filters = [];
+  #sorters = [];
 
 
-  #sortComponent = new SortListView();
   #formCreateComponent = new FormCreateView(BLANK_POINT);
   #tripEventListComponent = new TripEventListView();
-
 
   constructor({tripContainer,filterContainer,pointsModel}) {
     this.#tripContainer = tripContainer;
@@ -37,7 +37,7 @@ export default class TripPresenter {
     this.#tripPoints = [...this.#pointsModel.points];
 
     this.#filters = generateFilter(this.#pointsModel.points);
-
+    this.#sorters = generateSorter(this.#pointsModel.points);
     render(new FilterListView({filters : this.#filters,
       onFilterClick: () => {
         //Показать точки маршрута по выбранному фильтру
@@ -50,7 +50,7 @@ export default class TripPresenter {
 
   #renderTrip() {
     if (this.#tripPoints.length > 0) {
-      render(this.#sortComponent, this.#tripContainer);
+      render(new SortListView({sorters : this.#sorters}), this.#tripContainer);
       render(this.#formCreateComponent, this.#tripContainer);
       render(this.#tripEventListComponent, this.#tripContainer);
       this.#tripPoints.forEach((point) => {

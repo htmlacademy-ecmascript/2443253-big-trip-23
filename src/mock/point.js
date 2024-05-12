@@ -9,7 +9,8 @@ const mockPoints = [
     id: 0,
     basePrice: (getRandomInteger(MIN_PRICE,MAX_PRICE) / 100).toFixed(0) * 100,
     dateFrom: dayjs('2024.02.14'),
-    dateTo: dayjs('2024.02.14'),
+    dateTo: dayjs('2024.02.16'),
+    time : () => this.dateTo.diff(this.dateFrom, 'm'),
     destination: getRandomArrayElement(DESTIRNATIONS),
     isFavorite: true,
     offers: [
@@ -21,7 +22,8 @@ const mockPoints = [
     id: 1,
     basePrice: (getRandomInteger(MIN_PRICE,MAX_PRICE) / 100).toFixed(0) * 100,
     dateFrom: dayjs('2024.08.01'),
-    dateTo: dayjs('2024.08.01'),
+    dateTo: dayjs('2024.08.05'),
+    time : () => this.dateTo.diff(this.dateFrom, 'm'),
     destination: getRandomArrayElement(DESTIRNATIONS),
     isFavorite: false,
     offers: [
@@ -34,6 +36,7 @@ const mockPoints = [
     basePrice: (getRandomInteger(MIN_PRICE,MAX_PRICE) / 100).toFixed(0) * 100,
     dateFrom: dayjs('2024.05.01'),
     dateTo: dayjs('2024.06.01'),
+    time : () => this.dateTo.diff(this.dateFrom, 'm'),
     destination: getRandomArrayElement(DESTIRNATIONS),
     isFavorite: true,
     offers: [
