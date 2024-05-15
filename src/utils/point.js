@@ -18,16 +18,16 @@ function humanizeTime(dueDate) {
 
 function isPointToday(dateFrom, dateTo) {
   const now = new Date();
-  return (dateFrom.isBefore(now) || dateFrom.isSame(now)) && (dateTo.isAfter(now) || dateTo.isSame(now));
+  return (dayjs(dateFrom).isBefore(now) || dayjs(dateFrom).isSame(now)) && (dayjs(dateTo).isAfter(now) || dayjs(dateTo).isSame(now));
 }
 function isPointWillBe(dateFrom) {
   const now = new Date();
-  return dateFrom.isAfter(now);
+  return dayjs(dateFrom).isAfter(now);
 }
 
 function isPointExpired(dateTo) {
   const now = new Date();
-  return dateTo.isBefore(now);
+  return dayjs(dateTo).isBefore(now);
 }
 
 function comparePrice(a,b){
@@ -37,5 +37,17 @@ function compareTime(a,b){
   return parseFloat(b.basePrice) - parseFloat(a.basePrice);
 }
 
+//Функции сравнения при сортировке
+function sortDay(pointA, pointB) {
+  return dayjs(pointA.dateFrom).diff(dayjs(pointB.dateFrom));
+}
 
-export{humanizeDate,humanizeTime,capitalize,isPointToday, isPointWillBe, isPointExpired,comparePrice,compareTime};
+function sortTime(pointA, pointB) {
+  return pointB.time - pointA.time;
+}
+function sortPrice(pointA, pointB) {
+  return pointB.basePrice - pointA.basePrice;
+}
+
+
+export{humanizeDate,humanizeTime,capitalize,isPointToday, isPointWillBe, isPointExpired,comparePrice,compareTime,sortDay,sortTime,sortPrice};

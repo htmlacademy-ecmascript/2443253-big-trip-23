@@ -1,5 +1,4 @@
 import {humanizeDate,capitalize,humanizeTime} from '..//utils/point.js';
-import dayjs from 'dayjs';
 import AbstractView from '../framework/view/abstract-view.js';
 
 
@@ -9,28 +8,37 @@ import AbstractView from '../framework/view/abstract-view.js';
 export default class TripEventView extends AbstractView{
   #point = null;
   #handleEventClick = null;
-  #isClassFavorite = (isFavorite) => isFavorite ? 'event__favorite-btn--active' : '';
+  #handleFavoriteClick = null;
 
 
-  constructor ({point, onEditClick}){
+  constructor ({point, onEditClick,onFavoriteClick}){
     super();
     this.#point = point;
     this.#handleEventClick = onEditClick;
-
+    this.#handleFavoriteClick = onFavoriteClick;
     this.element.querySelector('.event__rollup-btn')
       .addEventListener('click', this.#editClickHandler);
+
+    this.element.querySelector('.event__favorite-btn')
+      .addEventListener('click', this.#favoriteClickHandler);
   }
+
+  #isClassFavorite = (isFavorite) => isFavorite ? 'event__favorite-btn--active' : '';
+
+  #favoriteClickHandler = (evt) =>{
+    evt.preventDefault();
+    this.#handleFavoriteClick();
+  };
 
   #editClickHandler = (evt)=> {
     evt.preventDefault();
     this.#handleEventClick();
   };
 
+
   get template() {
-    const {basePrice,dateFrom,dateTo,destination,isFavorite,offers,type} = this.#point;
-    const date1 = dayjs(dateFrom),
-      date2 = dayjs(dateTo);
-    const diffDates = date2.diff(date1,'m');
+    const {basePrice,dateFrom,dateTo,time,destination,isFavorite,offers,type} = this.#point;
+
 
     return `<li class="trip-events__item">
     <div class="event">
@@ -45,7 +53,7 @@ export default class TripEventView extends AbstractView{
           &mdash;
           <time class="event__end-time" datetime=${dateTo}>${humanizeTime(dateTo)}</time>
         </p>
-        <p class="event__duration">${diffDates}M</p>
+        <p class="event__duration">${time}H</p>
       </div>
       <p class="event__price">
         &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
