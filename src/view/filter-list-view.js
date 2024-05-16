@@ -6,26 +6,32 @@ export default class FilterListView extends AbstractView{
 
   #filters = null;
   #filterEventClick = null;
+  #prevFilterType = null;
 
   constructor({filters,onFilterClick}) {
     super();
     this.#filters = filters;
     this.#filterEventClick = onFilterClick;
-    this.#filters.map((element) => this.element.querySelector(`#filter-${element.type}`).addEventListener('click', this.#filterClickHandler));
+    this.element.addEventListener('click', this.#filterClickHandler);
   }
 
   #filterClickHandler = (evt)=> {
-    evt.preventDefault();
-    this.#filterEventClick();
+    const filterType = evt.target.dataset.filterType;
+    if (evt.target.tagName !== 'LABEL'){
+      return;
+    }
+    if (this.#prevFilterType !== filterType){
+      this.#prevFilterType = filterType;
+      this.#filterEventClick(filterType);
+    }
   };
 
 
   #createFilterItemTemplate(filter, isChecked) {
     const {type, count} = filter;
     return `<div class="trip-filters__filter">
-      <input id="filter-${type}" class="trip-filters__filter-input  visually-hidden" type="radio" name="trip-filter" value="${type}" ${isChecked ? 'checked' : ''}
-      ${count === 0 ? ' disabled' : ''}>
-      <label class="trip-filters__filter-label" for="filter-${type}">${capitalize(type)} ${count}</label>
+      <input id="filter-${type}" class="trip-filters__filter-input  visually-hidden" type="radio" name="trip-filter" value="${type}" ${isChecked ? 'checked' : ''}>
+      <label class="trip-filters__filter-label" data-filter-type="${type}" for="filter-${type}">${capitalize(type)} ${count}</label>
     </div>`;
   }
 

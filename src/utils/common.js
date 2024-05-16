@@ -12,4 +12,6 @@ const getRandomInteger = (a, b) => {
   return Math.floor(Math.random() * (upper - lower + 1) + lower);
 };
 
-export{getRandomArrayElement,getRandomInteger};
+const updateItem = (points,updatePoint) =>points.map((point) => point.id === updatePoint.id ? updatePoint : point);
+
+export{getRandomArrayElement,getRandomInteger,updateItem};

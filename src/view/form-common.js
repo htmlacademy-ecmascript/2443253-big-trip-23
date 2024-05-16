@@ -15,18 +15,18 @@ export default class FormCommon extends AbstractView{
   }
 
   _createDestinationImage = (image) =>`<img class="event__photo" src="${image}" alt="Event photo">`;
-  _createEventTypeItem(typeItem,state = ''){
+  _createEventTypeItem(typeItem,state = '',id){
     return `<div class="event__type-item">
-  <input id="event-type-${typeItem}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${typeItem} ${state}">
-  <label class="event__type-label  event__type-label--${typeItem}" for="event-type-${typeItem}-1">${capitalize(typeItem)}</label>
+  <input id="event-type-${typeItem}-${id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${typeItem} ${state}">
+  <label class="event__type-label  event__type-label--${typeItem}" for="event-type-${typeItem}-${id}">${capitalize(typeItem)}</label>
   </div>`;
   }
 
-  _createEventOfferItem({name,price},checked){
+  _createEventOfferItem({name,price},checked,id){
     return `
           <div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="event-offer-luggage-1" type="checkbox" name="event-offer-luggage" ${checked && 'checked'}>
-              <label class="event__offer-label" for="event-offer-luggage-1">
+              <input class="event__offer-checkbox  visually-hidden" id="event-offer-${name}-${id}" type="checkbox" name="event-offer-${name}" ${checked && 'checked'}>
+              <label class="event__offer-label" for="event-offer-${name}-${id}">
                 <span class="event__offer-title">${name}</span>
                 &plus;&euro;&nbsp;
                 <span class="event__offer-price">${price}</span>
@@ -37,7 +37,7 @@ export default class FormCommon extends AbstractView{
 
 
   _createEventForm(isEditFrom){
-    const {basePrice,dateFrom,dateTo,destination,offers,type} = this.#point;
+    const {basePrice,dateFrom,dateTo,destination,offers,type,id} = this.#point;
     return `
     <form class="event event--edit" action="#" method="post">
   <header class="event__header">
@@ -53,7 +53,7 @@ export default class FormCommon extends AbstractView{
           <legend class="visually-hidden">Event type</legend>
 
           ${EVENT_TYPES.map((element) =>
-    this._createEventTypeItem(element)).join('')}
+    this._createEventTypeItem(element,id)).join('')}
         </fieldset>
       </div>
     </div>
@@ -101,7 +101,7 @@ export default class FormCommon extends AbstractView{
       <div class="event__available-offers">
 
     ${OFFERS.map((element) =>
-    offers.includes(element) ? this._createEventOfferItem(element,true) : this._createEventOfferItem(element,false)).join('')
+    offers.includes(element) ? this._createEventOfferItem(element,true,id) : this._createEventOfferItem(element,false,id)).join('')
 }
       </div>
     </section>

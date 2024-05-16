@@ -5,7 +5,9 @@ function generateFilter(points) {
     ([filterType, filterPoints]) => ({
       type: filterType,
       count: filterPoints(points).length,
-    }),
+      tripPoints: filterPoints(points)
+
+    })
   );
 }
 
