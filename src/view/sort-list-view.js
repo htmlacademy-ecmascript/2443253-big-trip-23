@@ -3,7 +3,7 @@ import {capitalize} from '..//utils/point.js';
 
 export default class SortListView extends AbstractView{
 
-  #STATES_SORT = {
+  STATES_SORT = {
     'day': 'disabled',
     'event':'disabled',
     'offer':'disabled',
@@ -13,26 +13,26 @@ export default class SortListView extends AbstractView{
 
   #sorters = null;
   #handleSortClick = null;
-  #prevSortType = 'day';
+  prevSortType = 'day';
 
   constructor({sorters,onSortClick}) {
     super();
     this.#handleSortClick = onSortClick;
     this.#sorters = sorters;
-    this.element.addEventListener('click',this.#onSortListHandler);
+    this.element.addEventListener('click',this.#SortListHandler);
 
   }
 
-  #onSortListHandler = (evt) => {
+  #SortListHandler = (evt) => {
     const sortType = evt.target.dataset.sortType;
     if (evt.target.tagName !== 'LABEL') {
       return;
     }
-    if (this.#prevSortType !== sortType && ((sortType === 'price') || (sortType === 'time'))){
+    if (this.prevSortType !== sortType && ((sortType === 'price') || (sortType === 'time'))){
       this.#handleSortClick(sortType);
-      this.#STATES_SORT[this.#prevSortType] = '';
-      this.#prevSortType = sortType;
-      this.#STATES_SORT[sortType] = 'checked';
+      this.STATES_SORT[this.prevSortType] = '';
+      this.prevSortType = sortType;
+      this.STATES_SORT[sortType] = 'checked';
     }
 
   };
@@ -40,7 +40,7 @@ export default class SortListView extends AbstractView{
   #createSortItemTemplate(element) {
     const {type: sortingType} = element;
     return `<div class="trip-sort__item  trip-sort__item--${sortingType}">
-    <input id="sort-${sortingType}" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="sort-${sortingType}"  ${this.#STATES_SORT[sortingType]}></input>
+    <input id="sort-${sortingType}" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="sort-${sortingType}"  ${this.STATES_SORT[sortingType]}></input>
     <label class="trip-sort__btn" data-sort-type="${sortingType}" for="sort-${sortingType}">${capitalize(sortingType)}</label>
   </div>`;
   }
