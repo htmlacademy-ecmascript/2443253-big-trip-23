@@ -7,8 +7,8 @@ import PointPresenter from './point-presenter.js';
 
 import {render} from '../framework/render.js';
 import {BLANK_POINT} from '../model/points-model.js';
-import {generateFilter} from '../mock/filter.js';
-import {generateSorter} from '../mock/sort.js';
+import {generateFilter} from '../utils/filter.js';
+import {generateSorter} from '../utils/sort.js';
 import {updateItem} from '../utils/common.js';
 import {sortDay, sortPrice, sortTime} from '../utils/point.js';
 
@@ -61,17 +61,24 @@ export default class TripPresenter {
     this.#sorters = generateSorter(this.#pointsModel.points);
 
 
+    render(this.#formCreateComponent, this.#tripContainer);
+    render(this.#tripEventListComponent, this.#tripContainer);
+    this.#renderFilters();
+    this.#renderSorters();
+    this.#renderTrip();
+  }
+
+  #renderFilters(){
     this.#filterListView = new FilterListView({filters : this.#filters,
       onFilterClick: this.#handleFilterClick});
+    render(this.#filterListView, this.#filterListContainer);
+  }
+
+  #renderSorters(){
     this.#sortListView = new SortListView({sorters : this.#sorters,
       onSortClick : this.#handleSortClick});
 
-    render(this.#sortListView, this.#tripContainer);
-    render(this.#formCreateComponent, this.#tripContainer);
-    render(this.#tripEventListComponent, this.#tripContainer);
-    render(this.#filterListView, this.#filterListContainer);
-
-    this.#renderTrip();
+    render(this.#sortListView, this.#tripContainer,'afterbegin');
   }
 
   //Сортируем по типу
@@ -129,8 +136,8 @@ export default class TripPresenter {
     this.#sortPoints(DEFAULT_SORT_TYPE);
     //Отрисовка
     this.#renderTrip();
-
-
+    this.#sortListView.element.remove();
+    this.#renderSorters();
   };
 
   //Отрисуем к точки маршрутов, если они есть

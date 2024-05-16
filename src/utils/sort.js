@@ -8,5 +8,13 @@ const sorter = {
   [SortType.PRICE]: (points) => [...points].sort(comparePrice),
   [SortType.TIME]: (points) => [...points].sort(compareTime)
 };
-export {sorter};
+function generateSorter(points) {
+  return Object.entries(sorter).map(
+    ([sorterType, sorterPoints]) => ({
+      type: sorterType,
+      count: sorterPoints(points).length,
+    }),
+  );
+}
+export {sorter,generateSorter};
 
