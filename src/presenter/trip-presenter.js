@@ -38,7 +38,7 @@ export default class TripPresenter {
   #pointPresenters = new Map();
 
 
-  #formCreateComponent = new FormCreateView(BLANK_POINT);
+  #formCreateComponent = new FormCreateView({point:BLANK_POINT});
   #tripEventListComponent = new TripEventListView();
 
   constructor({tripContainer,filterContainer,pointsModel}) {

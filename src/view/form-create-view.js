@@ -1,13 +1,17 @@
-import { BLANK_POINT } from '../model/points-model.js';
+
 import FormCommon from './form-common.js';
 
 export default class FormCreateView extends FormCommon{
-  #point = null;
+  #formSubmitHandler = null;
 
-
-  constructor ({point = BLANK_POINT}){
+  constructor ({point}){
     super(point);
-    this.#point = point;
+    this._restoreHandlers();
+
+  }
+
+  _restoreHandlers(){
+    this.element.addEventListener('submit',this.#formSubmitHandler);
   }
 
   get template() {

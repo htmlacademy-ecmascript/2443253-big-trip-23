@@ -1,7 +1,7 @@
 
 import dayjs from 'dayjs';
 
-const DATE_FORMAT = 'MMM DD';
+const DATE_FORMAT = 'DD/MM/YY';
 const TIME_FORMAT = 'HH:mm';
 
 //Вернуть строку с первым символом в верхнем регистре

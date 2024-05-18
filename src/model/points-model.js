@@ -1,6 +1,6 @@
 import {getRandomPoint} from '../mock/point.js';
 import {DESTIRNATIONS} from '../const.js';
-const POINT_COUNT = 15;
+const POINT_COUNT = 5;
 
 const BLANK_POINT = {
   id: POINT_COUNT,

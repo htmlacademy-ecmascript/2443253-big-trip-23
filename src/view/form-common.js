@@ -1,17 +1,51 @@
 
-import AbstractView from '../framework/view/abstract-view.js';
+import AbstractStateFulView from '../framework/view/abstract-stateful-view.js';
 import {humanizeDate,capitalize,humanizeTime} from '..//utils/point.js';
 import {OFFERS,EVENT_TYPES, DESTIRNATIONS} from '../const.js';
-import { BLANK_POINT } from '../model/points-model.js';
+
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 
 
-export default class FormCommon extends AbstractView{
-  #point = null;
-  #handleFormSubmit = null;
+export default class FormCommon extends AbstractStateFulView{
 
-  constructor ({point = BLANK_POINT}){
+  _idEditForm = false;
+  #datepicker = null;
+
+  constructor (point){
     super();
-    this.#point = point;
+    this._setState(FormCommon.parsePointToState(point));
+  }
+
+  // Перегружаем метод родителя removeElement,
+  // чтобы при удалении удалялся более не нужный календарь
+  removeElement() {
+    super.removeElement();
+
+    if (this.#datepicker) {
+      this.#datepicker.destroy();
+      this.#datepicker = null;
+    }
+  }
+
+  _setDatePicker(date,elementID,dateElementHandler) {
+
+    this.#datepicker = flatpickr(
+      this.element.querySelector(elementID),
+      {
+        defaultDate: date,
+        onChange: dateElementHandler, // На событие flatpickr передаём наш колбэк
+      },
+    );
+  }
+
+  static parsePointToState(point) {
+    return {...point
+    };
+  }
+
+  static parseStateToPoint(state) {
+    return {...state};
   }
 
   _createDestinationImage = (image) =>`<img class="event__photo" src="${image}" alt="Event photo">`;
@@ -37,24 +71,24 @@ export default class FormCommon extends AbstractView{
 
 
   _createEventForm(isEditFrom){
-    const {basePrice,dateFrom,dateTo,destination,offers,type,id} = this.#point;
+    const {basePrice,dateFrom,dateTo,destination,offers,type,id} = this._state;
     return `
     <form class="event event--edit" action="#" method="post">
   <header class="event__header">
     <div class="event__type-wrapper">
-      <label class="event__type  event__type-btn" for="event-type-toggle-1">
+      <label class="event__type  event__type-btn" for="event-type-toggle-${id}">
         <span class="visually-hidden">Choose event type</span>
-        <img class="event__type-icon" width="17" height="17" src="img/icons/flight.png" alt="Event type icon">
+        <img class="event__type-icon" width="17" height="17" src="img/icons/${EVENT_TYPES.find((element) => element === type)}.png" alt="Event type icon">
       </label>
-      <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
+      <input class="event__type-toggle  visually-hidden" id="event-type-toggle-${id}" type="checkbox">
 
-      <div class="event__type-list">
+      <div class="event__type-list" >
         <fieldset class="event__type-group">
           <legend class="visually-hidden">Event type</legend>
 
           ${EVENT_TYPES.map((element) =>
     this._createEventTypeItem(element,id)).join('')}
-        </fieldset>
+          </fieldset>
       </div>
     </div>
 
@@ -62,8 +96,8 @@ export default class FormCommon extends AbstractView{
           <label class="event__label  event__type-output" for="event-destination-1">
           ${capitalize(type)}
           </label>
-          <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination.town}" list="destination-list-1">
-          <datalist id="destination-list-1">
+          <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination.town}" list="destination-list-${id}">
+          <datalist id="destination-list-${id}">
             <option value="Amsterdam"></option>
             <option value="Geneva"></option>
             <option value="Chamonix"></option>
@@ -100,9 +134,15 @@ export default class FormCommon extends AbstractView{
 
       <div class="event__available-offers">
 
-    ${OFFERS.map((element) =>
-    offers.includes(element) ? this._createEventOfferItem(element,true,id) : this._createEventOfferItem(element,false,id)).join('')
+    ${ isEditFrom ?
+    offers.map((element) =>
+      OFFERS.includes(element) ? this._createEventOfferItem(element,true,id) : this._createEventOfferItem(element,false,id)).join('')
+    :
+    OFFERS.map((element) =>
+      offers.includes(element) ? this._createEventOfferItem(element,true,id) : this._createEventOfferItem(element,false,id)).join('')
+
 }
+
       </div>
     </section>
 
