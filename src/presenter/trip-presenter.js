@@ -1,5 +1,5 @@
 import SortListView from '../view/sort-list-view.js';
-import FormCreateView from '../view/form-create-view.js';
+import FormCreateEditView from '../view/form-create-edit.js';
 import TripNoEventView from '../view/no-point-view.js';
 import TripEventListView from '../view/trip-event-list-view.js';
 import FilterListView from '../view/filter-list-view.js';
@@ -23,6 +23,9 @@ export default class TripPresenter {
   #tripNoEventView = null;
   #sortListView = null;
   #pointsModel = null;
+  #newEventComponent = null;
+
+
   //Рабочий массив точек маршрута
   #tripPoints = [];
   //Исходный немутированный массив точек маршрута
@@ -38,13 +41,13 @@ export default class TripPresenter {
   #pointPresenters = new Map();
 
 
-  #formCreateComponent = new FormCreateView({point:BLANK_POINT});
   #tripEventListComponent = new TripEventListView();
 
   constructor({tripContainer,filterContainer,pointsModel}) {
     this.#tripContainer = tripContainer;
     this.#pointsModel = pointsModel;
     this.#filterListContainer = filterContainer;
+    document.querySelector('.trip-main__event-add-btn').addEventListener('click',this.#newEventHandler);
   }
 
 
@@ -61,25 +64,27 @@ export default class TripPresenter {
     this.#sorters = generateSorter(this.#pointsModel.points);
 
 
-    render(this.#formCreateComponent, this.#tripContainer);
     render(this.#tripEventListComponent, this.#tripContainer);
     this.#renderFilters();
     this.#renderSorters();
     this.#renderTrip();
   }
 
+  //Перерисовать список фильтров
   #renderFilters(){
-    this.#filterListView = new FilterListView({filters : this.#filters,
+    this.#filterListView = new FilterListView({filters : this.#filters,currentFilter:this.#currentFilterType,
       onFilterClick: this.#handleFilterClick});
     render(this.#filterListView, this.#filterListContainer);
   }
 
+  //Перерисовать список сортировки
   #renderSorters(){
     this.#sortListView = new SortListView({sorters : this.#sorters,
-      onSortClick : this.#handleSortClick});
+      onSortClick : this.#SortClickHandler});
 
     render(this.#sortListView, this.#tripContainer,'afterbegin');
   }
+
 
   //Сортируем по типу
   #sortPoints(sortType){
@@ -100,8 +105,33 @@ export default class TripPresenter {
 
   }
 
+  //обработчик создания новой точки
+  #newEventHandler = (evt) =>{
+    evt.preventDefault();
+    if (!this.#newEventComponent){
+      this.#newEventComponent = new FormCreateEditView({point:BLANK_POINT,
+        onSubmitClick: this.#newEventSubmitHandler,
+        onCancelClick: this.#newEventCancelHandler,
+        isEditForm : false});
+      render(this.#newEventComponent, this.#tripContainer,'afterbegin');
+
+      this.#refreshSortDefaultFilter(DEFAULT_FILTER);
+    }
+  };
+
+  //Добавляем точку
+  #newEventSubmitHandler = ()=>{
+
+  };
+
+  //Отмена добавления точки
+  #newEventCancelHandler = ()=>{
+    this.#newEventComponent.element.remove();
+    this.#newEventComponent = null;
+  };
+
   //Обработчик сортировки
-  #handleSortClick = (sortType) =>{
+  #SortClickHandler = (sortType) =>{
     //сортировка
     this.#sortPoints(sortType);
     //очистка и рендеринг
@@ -125,9 +155,10 @@ export default class TripPresenter {
 
   }
 
-  //Обработчик - фильтрации
-  #handleFilterClick = (filterType) =>{
+  //сброс на сортировку по умолчанию и переключение на указанную в параметрах фильтрацию
+  #refreshSortDefaultFilter(filterType){
     this.#currentFilterType = filterType;
+
     //Фильтруем
     this.#filterPoints(filterType);
     //очистка и рендеринг
@@ -136,8 +167,20 @@ export default class TripPresenter {
     this.#sortPoints(DEFAULT_SORT_TYPE);
     //Отрисовка
     this.#renderTrip();
+    //Перерисуем блок сортировки
     this.#sortListView.element.remove();
+    this.#sortListView = null;
     this.#renderSorters();
+    //Перерисуем блок фильтров
+    this.#filterListView.element.remove();
+    this.#filterListView = null;
+    this.#renderFilters();
+
+  }
+
+  //Обработчик - фильтрации
+  #handleFilterClick = (filterType) =>{
+    this.#refreshSortDefaultFilter(filterType);
   };
 
   //Отрисуем к точки маршрутов, если они есть

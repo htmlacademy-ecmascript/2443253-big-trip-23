@@ -1,5 +1,5 @@
 
-import FormEditView from '../view/form-edit-view.js';
+import FormCreateEditView from '../view/form-create-edit.js';
 import TripEventView from '../view/trip-event-view.js';
 import {replace,render,remove} from '../framework/render.js';
 
@@ -35,9 +35,11 @@ export default class PointPresenter {
       onFavoriteClick: this.#favoriteClickHandler
     });
 
-    this.#pointEditComponent = new FormEditView({
+    this.#pointEditComponent = new FormCreateEditView({
       point : this.#point,
-      onFormSubmit: this.#submitFormHandler
+      onFormSubmit: this.#submitFormHandler,
+      onCancelClick: this.#resetEditFormHandler,
+      isEditForm : true
     });
 
     if ((prevPointViewComponent === null) || (prevPointEditComponent === null)){
@@ -82,6 +84,10 @@ export default class PointPresenter {
 
   #submitFormHandler = () => {
     this.#replaceFormToPoint();
+  };
+
+  #resetEditFormHandler = ()=>{
+    this.#pointEditComponent.reset(this.#point);
   };
 
   #escKeyDownHandler = (evt) => {

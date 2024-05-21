@@ -6,23 +6,26 @@ export default class FilterListView extends AbstractView{
 
   #filters = null;
   #filterEventClick = null;
+  #currentFilterType = null;
   #prevFilterType = null;
 
-  constructor({filters,onFilterClick}) {
+  constructor({filters,currentFilter,onFilterClick}) {
     super();
     this.#filters = filters;
     this.#filterEventClick = onFilterClick;
+    this.#currentFilterType = currentFilter;
     this.element.addEventListener('click', this.#filterClickHandler);
   }
 
   #filterClickHandler = (evt)=> {
-    const filterType = evt.target.dataset.filterType;
+    this.#currentFilterType = evt.target.dataset.filterType;
+
     if (evt.target.tagName !== 'LABEL'){
       return;
     }
-    if (this.#prevFilterType !== filterType){
-      this.#prevFilterType = filterType;
-      this.#filterEventClick(filterType);
+    if (this.#prevFilterType !== this.#currentFilterType){
+      this.#prevFilterType = this.#currentFilterType;
+      this.#filterEventClick(this.#currentFilterType);
     }
   };
 
@@ -36,9 +39,10 @@ export default class FilterListView extends AbstractView{
   }
 
   get template() {
-
+    const currentFilterIndex = this.#filters.findIndex((filter) => filter.type === this.#currentFilterType);
     return `<form class="trip-filters" action="#" method="get">
-          ${this.#filters.map((element,index) => this.#createFilterItemTemplate(element,index === 0)).join('')}
+          ${this.#filters.map((element,index) => this.#createFilterItemTemplate(element,index === currentFilterIndex))
+    .join('')}
           <button class="visually-hidden" type="submit">Accept filter</button>
           </form>`;
   }

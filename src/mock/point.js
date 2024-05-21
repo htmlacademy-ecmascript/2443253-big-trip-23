@@ -1,5 +1,5 @@
-import {EVENT_TYPES, OFFERS,DESTIRNATIONS} from '../const.js';
-import {getRandomArrayElement,getRandomInteger} from '../utils/common.js';
+import {EVENT_TYPES, OFFERS,DESTINATIONS} from '../const.js';
+import {getRandomArrayElement,getRandomInteger,getRandomArrayUpToThree} from '../utils/common.js';
 import { nanoid } from 'nanoid';
 
 
@@ -9,50 +9,42 @@ const MAX_PRICE = 3000;
 const mockPoints = [
   {
     basePrice: (getRandomInteger(MIN_PRICE,MAX_PRICE) / 100).toFixed(0) * 100,
-    dateFrom: '2024.06.14',
-    dateTo: '2024.06.16',
+    dateFrom: new Date('2024.06.14'),
+    dateTo: new Date('2024.06.16'),
     time : 48,
-    destination: getRandomArrayElement(DESTIRNATIONS),
+    destination: getRandomArrayElement(DESTINATIONS),
     isFavorite: true,
-    offers: [
-      getRandomArrayElement(OFFERS)
-    ],
+    offers: getRandomArrayUpToThree(OFFERS),
     type: getRandomArrayElement(EVENT_TYPES)
   },
   {
     basePrice: (getRandomInteger(MIN_PRICE,MAX_PRICE) / 100).toFixed(0) * 100,
-    dateFrom: '2024.08.01',
-    dateTo: '2024.08.05',
+    dateFrom: new Date('2024.08.01'),
+    dateTo: new Date('2024.08.05'),
     time : 96,
-    destination: getRandomArrayElement(DESTIRNATIONS),
+    destination: getRandomArrayElement(DESTINATIONS),
     isFavorite: false,
-    offers: [
-      getRandomArrayElement(OFFERS)
-    ],
+    offers: getRandomArrayUpToThree(OFFERS),
     type: getRandomArrayElement(EVENT_TYPES)
   },
   {
     basePrice: (getRandomInteger(MIN_PRICE,MAX_PRICE) / 100).toFixed(0) * 100,
-    dateFrom: '2024.05.01',
-    dateTo: '2024.06.01',
+    dateFrom: new Date('2024.05.01'),
+    dateTo: new Date('2024.06.01'),
     time : 744,
-    destination: getRandomArrayElement(DESTIRNATIONS),
+    destination: getRandomArrayElement(DESTINATIONS),
     isFavorite: true,
-    offers: [
-      getRandomArrayElement(OFFERS)
-    ],
+    offers: getRandomArrayUpToThree(OFFERS),
     type: getRandomArrayElement(EVENT_TYPES)
   },
   {
     basePrice: (getRandomInteger(MIN_PRICE,MAX_PRICE) / 100).toFixed(0) * 100,
-    dateFrom: '2024.07.01',
-    dateTo: '2024.07.08',
+    dateFrom: new Date('2024.07.01'),
+    dateTo: new Date('2024.07.08'),
     time : 168,
-    destination: getRandomArrayElement(DESTIRNATIONS),
+    destination: getRandomArrayElement(DESTINATIONS),
     isFavorite: true,
-    offers: [
-      getRandomArrayElement(OFFERS)
-    ],
+    offers: getRandomArrayUpToThree(OFFERS),
     type: getRandomArrayElement(EVENT_TYPES)
   }
 ];

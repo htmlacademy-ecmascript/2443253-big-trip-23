@@ -1,18 +1,17 @@
 import {getRandomPoint} from '../mock/point.js';
-import {DESTIRNATIONS} from '../const.js';
 const POINT_COUNT = 5;
 
 const BLANK_POINT = {
   id: POINT_COUNT,
-  basePrice: 100,
+  basePrice: 0,
   dateFrom: new Date(),
   dateTo: new Date(),
-  destination: DESTIRNATIONS[3],
+  destination: {name:'',town:'',foto:''},
   isFavorite: false,
   offers: [
-    {name:'Добавить багаж',price:300}
+
   ],
-  type: 'train'
+  type: 'flight'
 };
 
 

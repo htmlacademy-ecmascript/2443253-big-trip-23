@@ -1,18 +1,16 @@
 
 import dayjs from 'dayjs';
 
-const DATE_FORMAT = 'DD/MM/YY';
-const TIME_FORMAT = 'HH:mm';
+const DATE_FORMAT = 'DD/MM/YY HH:mm';
+const DATE_FORMAT_WITHOUT_TIME = 'DD/MM/YY';
+
 
 //Вернуть строку с первым символом в верхнем регистре
 const capitalize = (s) => s && s[0].toUpperCase() + s.slice(1);
 
 
-function humanizeDate(dueDate) {
-  return dueDate ? dayjs(dueDate).format(DATE_FORMAT) : '';
-}
-function humanizeTime(dueDate) {
-  return dueDate ? dayjs(dueDate).format(TIME_FORMAT) : '';
+function humanizeDate(dueDate,dateFormat = DATE_FORMAT) {
+  return dueDate ? dayjs(dueDate).format(dateFormat) : '';
 }
 
 
@@ -50,4 +48,4 @@ function sortPrice(pointA, pointB) {
 }
 
 
-export{humanizeDate,humanizeTime,capitalize,isPointToday, isPointWillBe, isPointExpired,comparePrice,compareTime,sortDay,sortTime,sortPrice};
+export{humanizeDate,capitalize,isPointToday, isPointWillBe, isPointExpired,comparePrice,compareTime,sortDay,sortTime,sortPrice,DATE_FORMAT_WITHOUT_TIME};
