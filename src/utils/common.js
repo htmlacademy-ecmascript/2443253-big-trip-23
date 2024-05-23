@@ -15,7 +15,7 @@ const getRandomArrayUpToThree = (items) => {
   return randomArray;
 
 
-}
+};
 
 //Случайное число из диапазона
 
