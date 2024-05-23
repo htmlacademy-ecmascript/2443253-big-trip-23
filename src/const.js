@@ -8,7 +8,7 @@ const OFFERS = [
 ];
 
 //Список направлений
-const DESTIRNATIONS = [
+const DESTINATIONS = [
   {name:'Путешествие в Египет',town:'Kair',foto:'img/photos/1.jpg'},
   {name:'Путешествие в Испанию',town:'Madrid',foto:'img/photos/2.jpg'},
   {name:'Путешествие в Италию',town:'Venecia',foto:'img/photos/3.jpg'},
@@ -29,4 +29,6 @@ const SortType = {
   PRICE:'price',
   OFFER:'offer'};
 
-export {EVENT_TYPES,OFFERS,DESTIRNATIONS,FilterType,SortType};
+const MAX_DAYS_TRIP_POINT = '365';
+
+export {EVENT_TYPES,OFFERS,DESTINATIONS,FilterType,SortType,MAX_DAYS_TRIP_POINT};

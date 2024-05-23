@@ -1,4 +1,4 @@
-import {humanizeDate,capitalize,humanizeTime} from '..//utils/point.js';
+import {humanizeDate,capitalize,DATE_FORMAT_WITHOUT_TIME} from '..//utils/point.js';
 import AbstractView from '../framework/view/abstract-view.js';
 
 
@@ -42,16 +42,16 @@ export default class TripEventView extends AbstractView{
 
     return `<li class="trip-events__item">
     <div class="event">
-      <time class="event__date" datetime=${dateFrom}>${humanizeDate(dateFrom)}</time>
+      <time class="event__date" datetime=${dateFrom}>${humanizeDate(dateFrom,DATE_FORMAT_WITHOUT_TIME)}</time>
       <div class="event__type">
         <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
       </div>
       <h3 class="event__title">${capitalize(type)} ${destination.town}</h3>
       <div class="event__schedule">
         <p class="event__time">
-          <time class="event__start-time" datetime=${dateFrom}>${humanizeTime(dateFrom)}</time>
+          <time class="event__start-time" datetime=${dateFrom}>${humanizeDate(dateFrom)}</time>
           &mdash;
-          <time class="event__end-time" datetime=${dateTo}>${humanizeTime(dateTo)}</time>
+          <time class="event__end-time" datetime=${dateTo}>${humanizeDate(dateTo)}</time>
         </p>
         <p class="event__duration">${time}H</p>
       </div>
