@@ -7,6 +7,7 @@ const filter = {
   [FilterType.PRESENT]: (points) => points.filter((point) => isPointToday(point.dateFrom,point.dateTo)),
   [FilterType.PAST]: (points) => points.filter((point) => isPointExpired(point.dateTo))
 };
+
 function generateFilter(points) {
   return Object.entries(filter).map(
     ([filterType, filterPoints]) => ({

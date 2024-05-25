@@ -1,5 +1,5 @@
-import {EVENT_TYPES, OFFERS,DESTINATIONS} from '../const.js';
-import {getRandomArrayElement,getRandomInteger,getRandomArrayUpToThree} from '../utils/common.js';
+import {EVENT_TYPES, DESTINATIONS,AVAILABLE_OFFERS_FOR_TYPE} from '../const.js';
+import {getRandomArrayElement,getRandomInteger,getRandomArray} from '../utils/common.js';
 import { nanoid } from 'nanoid';
 
 
@@ -14,8 +14,9 @@ const mockPoints = [
     time : 48,
     destination: getRandomArrayElement(DESTINATIONS),
     isFavorite: true,
-    offers: getRandomArrayUpToThree(OFFERS),
     type: getRandomArrayElement(EVENT_TYPES)
+
+
   },
   {
     basePrice: (getRandomInteger(MIN_PRICE,MAX_PRICE) / 100).toFixed(0) * 100,
@@ -24,8 +25,8 @@ const mockPoints = [
     time : 96,
     destination: getRandomArrayElement(DESTINATIONS),
     isFavorite: false,
-    offers: getRandomArrayUpToThree(OFFERS),
     type: getRandomArrayElement(EVENT_TYPES)
+
   },
   {
     basePrice: (getRandomInteger(MIN_PRICE,MAX_PRICE) / 100).toFixed(0) * 100,
@@ -34,7 +35,6 @@ const mockPoints = [
     time : 744,
     destination: getRandomArrayElement(DESTINATIONS),
     isFavorite: true,
-    offers: getRandomArrayUpToThree(OFFERS),
     type: getRandomArrayElement(EVENT_TYPES)
   },
   {
@@ -44,12 +44,17 @@ const mockPoints = [
     time : 168,
     destination: getRandomArrayElement(DESTINATIONS),
     isFavorite: true,
-    offers: getRandomArrayUpToThree(OFFERS),
     type: getRandomArrayElement(EVENT_TYPES)
   }
 ];
-const getRandomPoint = () => ({ id : nanoid(),
-  ...getRandomArrayElement(mockPoints)
-});
 
+
+const getRandomPoint = () => {
+  const randomPoint = getRandomArrayElement(mockPoints);
+  return { id : nanoid(),
+    availableOffers: AVAILABLE_OFFERS_FOR_TYPE [randomPoint.type],
+    offers: getRandomArray(AVAILABLE_OFFERS_FOR_TYPE [randomPoint.type]),
+    ...randomPoint
+  };
+};
 export {getRandomPoint};
