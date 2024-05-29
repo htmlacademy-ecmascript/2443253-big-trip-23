@@ -1,10 +1,12 @@
 import SortListView from '../view/sort-list-view.js';
-import FormCreateEditView from '../view/form-create-edit.js';
+
+import FormCreateEditView from '../view/manage-form-view.js';
 import TripNoEventView from '../view/no-point-view.js';
 import TripEventListView from '../view/trip-event-list-view.js';
 import PointPresenter from './point-presenter.js';
 
-import {render,remove} from '../framework/render.js';
+
+import {render,remove,RenderPosition} from '../framework/render.js';
 import {BLANK_POINT} from '../model/points-model.js';
 import {generateSorter} from '../utils/sort.js';
 import {filter} from '../utils/filter.js';
@@ -12,7 +14,7 @@ import {filter} from '../utils/filter.js';
 import { nanoid } from 'nanoid';
 
 import {sortDay, sortPrice, sortTime} from '../utils/point.js';
-import {SortType,DEFAULT_SORT_TYPE,UserAction,UpdateType} from '../const.js';
+import {SortType,DEFAULT_SORT_TYPE,UserAction,UpdateType, DEFAULT_FILTER} from '../const.js';
 
 export default class TripPresenter {
 
@@ -24,6 +26,7 @@ export default class TripPresenter {
   #tripContainer = null;
   #filterListView = null;
   #tripNoEventView = null;
+
   #sortListView = null;
   #pointsModel = null;
   #filterModel = null;
@@ -40,7 +43,6 @@ export default class TripPresenter {
   //Текущий метод сортировки
   #currentSortType = DEFAULT_SORT_TYPE;
 
-  #filters = [];
   #sorters = [];
 
 
@@ -99,7 +101,7 @@ export default class TripPresenter {
         break;
       case UpdateType.BIG:
         // - обновить всю доску (например, при переключении фильтра)
-        this.#clearPointsSection({resetSort:true});
+        this.#clearPointsSection(true);
         this.#renderTrip();
 
         break;
@@ -116,28 +118,33 @@ export default class TripPresenter {
     this.#renderTrip();
   }
 
+
   //Перерисовать список сортировки
   #renderSorters(){
     this.#sortListView = new SortListView({sorters : this.#sorters,
-      onSortClick : this.#sortClickHandler});
+      onSortClick : this.#sortClickHandler,currentSortType : this.#currentSortType});
 
-    render(this.#sortListView, this.#tripContainer,'afterbegin');
+    render(this.#sortListView, this.#tripContainer,RenderPosition.AFTERBEGIN);
   }
 
 
   //обработчик создания новой точки
   #newEventHandler = (evt) =>{
     this.#newPointButton.disabled = true;
+    this.#filterModel.filterType = DEFAULT_FILTER;
+
+
     evt.preventDefault();
     if (!this.#newEventComponent){
       this.#newEventComponent = new FormCreateEditView({point:BLANK_POINT,
         onSubmitClick: this.#newEventSubmitHandler,
         onCancelClick: this.#newEventCancelHandler,
         isEditForm : false});
-      render(this.#newEventComponent, this.#tripContainer,'afterbegin');
+      render(this.#newEventComponent, this.#tripContainer,RenderPosition.AFTERBEGIN);
 
-      this.#clearPointsSection({resetSort:true});
-      this.#renderTrip();
+      this.#currentSortType = DEFAULT_SORT_TYPE;
+      this.#sortListView.resetSorters();
+      this.#filterModel.setFilter(UpdateType.BIG, DEFAULT_FILTER);
 
     }
   };
@@ -182,7 +189,7 @@ export default class TripPresenter {
 
 
   //Очищаем список точек, секции фильтрации и сортировки
-  #clearPointsSection({resetSort = false} = {}){
+  #clearPointsSection(resetSort = false){
     this.#clearPointPresenters();
     if (resetSort) {
       this.#currentSortType = DEFAULT_SORT_TYPE;
@@ -201,7 +208,6 @@ export default class TripPresenter {
   #renderTrip() {
     const points = this.points;
 
-    //this.#renderFilters();
     this.#renderSorters();
 
     if (points.length > 0) {

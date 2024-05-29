@@ -13,7 +13,7 @@ export default class TripNoEventView extends AbstractView{
 
   #selectItemTemplate(filterType = 'everthing'){
     switch (filterType){
-      case 'everthing':
+      case 'everything':
         return '<p class="trip-events__msg">Click New Event to create your first point</p>';
       case 'past':
         return '<p class="trip-events__msg">There are no past events now</p>';

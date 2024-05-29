@@ -1,4 +1,4 @@
-import {humanizeDate,capitalize,DATE_FORMAT_WITHOUT_TIME} from '..//utils/point.js';
+import {humanizeDate,capitalize,DATE_FORMAT_WITHOUT_TIME,humanizeDiffDates} from '..//utils/point.js';
 import AbstractView from '../framework/view/abstract-view.js';
 import {OFFERS} from '../const.js';
 
@@ -38,7 +38,9 @@ export default class TripEventView extends AbstractView{
 
 
   get template() {
-    const {basePrice,dateFrom,dateTo,time,destination,isFavorite,offers,type} = this.#point;
+    const {basePrice,dateFrom,dateTo,time,destination,isFavorite,offers : pointoffers,availableOffers,type} = this.#point;
+    const offersForView = availableOffers.filter((elem) =>
+      pointoffers.includes(elem));
 
 
     return `<li class="trip-events__item">
@@ -54,7 +56,7 @@ export default class TripEventView extends AbstractView{
           &mdash;
           <time class="event__end-time" datetime=${dateTo}>${humanizeDate(dateTo)}</time>
         </p>
-        <p class="event__duration">${time}H</p>
+        <p class="event__duration">${humanizeDiffDates(time)}</p>
       </div>
       <p class="event__price">
         &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
@@ -62,9 +64,10 @@ export default class TripEventView extends AbstractView{
       <h4 class="visually-hidden">Offers:</h4>
       <ul class="event__selected-offers">
         <li class="event__offer">
-          <span class="event__offer-title">${offers.map((elem)=>OFFERS[elem].name)}</span>
-          &plus;&euro;&nbsp;
-          <span class="event__offer-price">${offers.map((elem)=>OFFERS[elem].price)}</span>
+          <span class="event__offer-title">${offersForView.map((el) => OFFERS[el].name).join(', ')}
+            </span>
+          ${offersForView.length > 0 ? '&plus;&euro;&nbsp' : ''}
+          <span class="event__offer-price">${offersForView.map((el) => OFFERS[el].price).join(', ')}</span>
         </li>
       </ul>
       <button class="event__favorite-btn ${this.#isClassFavorite(isFavorite)}" type="button">

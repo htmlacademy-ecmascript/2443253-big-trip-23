@@ -13,6 +13,25 @@ function humanizeDate(dueDate,dateFormat = DATE_FORMAT) {
   return dueDate ? dayjs(dueDate).format(dateFormat) : '';
 }
 
+function humanizeDiffDates (diffMinutes){
+  const days = Math.trunc(diffMinutes / 60 / 24),
+    hours = Math.trunc((diffMinutes - days * 24 * 60) / 60),
+    minutes = (diffMinutes - days * 24 * 60 - hours * 60);
+
+
+  if (diffMinutes < 60){
+    return `${minutes}M`;
+  } else if (diffMinutes > 60 && diffMinutes < 1440){
+    return `${hours}H ${minutes}M`;
+  } else if (diffMinutes > 1440){
+    return `${days}D
+            ${hours}H
+            ${minutes}M`;
+  }
+
+
+}
+
 
 function isPointToday(dateFrom, dateTo) {
   const now = new Date();
@@ -48,4 +67,6 @@ function sortPrice(pointA, pointB) {
 }
 
 
-export{humanizeDate,capitalize,isPointToday, isPointWillBe, isPointExpired,comparePrice,compareTime,sortDay,sortTime,sortPrice,DATE_FORMAT_WITHOUT_TIME};
+export{humanizeDate,capitalize,isPointToday, isPointWillBe, isPointExpired,comparePrice,compareTime,sortDay,sortTime,sortPrice,DATE_FORMAT_WITHOUT_TIME,
+  humanizeDiffDates
+};

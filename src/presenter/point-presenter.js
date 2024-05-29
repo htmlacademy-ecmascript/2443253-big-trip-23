@@ -1,5 +1,5 @@
 
-import FormCreateEditView from '../view/form-create-edit.js';
+import FormCreateEditView from '../view/manage-form-view.js';
 import TripEventView from '../view/trip-event-view.js';
 import {replace,render,remove} from '../framework/render.js';
 import {UserAction, UpdateType} from '../const.js';
