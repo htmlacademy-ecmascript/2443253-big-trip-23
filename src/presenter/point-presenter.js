@@ -1,7 +1,8 @@
 
-import FormCreateEditView from '../view/form-create-edit.js';
+import FormCreateEditView from '../view/manage-form-view.js';
 import TripEventView from '../view/trip-event-view.js';
 import {replace,render,remove} from '../framework/render.js';
+import {UserAction, UpdateType} from '../const.js';
 
 const Mode = {
   DEFAULT:'DEFAULT',
@@ -37,7 +38,7 @@ export default class PointPresenter {
 
     this.#pointEditComponent = new FormCreateEditView({
       point : this.#point,
-      onFormSubmit: this.#submitFormHandler,
+      onSubmitClick: this.#submitFormHandler,
       onCancelClick: this.#resetEditFormHandler,
       isEditForm : true
     });
@@ -75,19 +76,32 @@ export default class PointPresenter {
 
 
   #favoriteClickHandler = () =>{
-    this.#handlePointUpdate({...this.#point, isFavorite: !this.#point.isFavorite});
+    this.#handlePointUpdate(
+      UserAction.UPDATE_POINT,
+      UpdateType.MIDDLE,
+      {...this.#point, isFavorite: !this.#point.isFavorite});
   };
 
   #editClickHandler = () => {
     this.#replacePointToForm(this.#pointViewComponent,this.#pointEditComponent);
   };
 
-  #submitFormHandler = () => {
+  #submitFormHandler = (point) => {
+    this.#handlePointUpdate(
+      UserAction.UPDATE_POINT,
+      UpdateType.MIDDLE,
+      point);
     this.#replaceFormToPoint();
   };
 
-  #resetEditFormHandler = ()=>{
+  #resetEditFormHandler = (point)=>{
     this.#pointEditComponent.reset(this.#point);
+    this.#handlePointUpdate(
+      UserAction.DELETE_POINT,
+      UpdateType.MIDDLE,
+      point,
+    );
+
   };
 
   #escKeyDownHandler = (evt) => {

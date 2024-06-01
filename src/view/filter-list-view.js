@@ -9,11 +9,11 @@ export default class FilterListView extends AbstractView{
   #currentFilterType = null;
   #prevFilterType = null;
 
-  constructor({filters,currentFilter,onFilterClick}) {
+  constructor({filters,currentFilterType,onFilterTypeChange}) {
     super();
     this.#filters = filters;
-    this.#filterEventClick = onFilterClick;
-    this.#currentFilterType = currentFilter;
+    this.#filterEventClick = onFilterTypeChange;
+    this.#currentFilterType = currentFilterType;
     this.element.addEventListener('click', this.#filterClickHandler);
   }
 

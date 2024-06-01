@@ -1,10 +1,20 @@
 //Услуга
 const EVENT_TYPES = ['taxi','bus','train','ship','drive','flight','check-in','sightseeing','restaurant'];
-
+const AVAILABLE_OFFERS_FOR_TYPE = {
+  'taxi':[0],
+  'bus':[0,1],
+  'train':[0,1],
+  'ship':[0,1,3],
+  'drive':[],
+  'flight':[0,1,3],
+  'check-in':[0,1,3],
+  'sightseeing':[2],
+  'restaurant':[1]
+};
 //Список дополнительных предложений
 const OFFERS = [
-  {name:'Добавить багаж',price:300},{name:'Выбрать места',price:1000},{name:'Добраться поездом',price:3000},
-  {name:'Перевести в бизнес-класс',price:500}
+  {name:'Добавить багаж',price:30},{name:'Выбрать места',price:10},{name:'Добраться поездом',price:80},
+  {name:'Перевести в бизнес-класс',price:50}
 ];
 
 //Список направлений
@@ -29,6 +39,21 @@ const SortType = {
   PRICE:'price',
   OFFER:'offer'};
 
+const UserAction = {
+  UPDATE_POINT: 'UPDATE_POINT',
+  ADD_POINT: 'ADD_POINT',
+  DELETE_POINT: 'DELETE_POINT',
+};
+
+const UpdateType = {
+  SMALL: 'SMALL',
+  MIDDLE: 'MIDDLE',
+  BIG: 'BIG',
+};
+
+const DEFAULT_FILTER = 'everything';
+const DEFAULT_SORT_TYPE = 'day';
+
 const MAX_DAYS_TRIP_POINT = '365';
 
-export {EVENT_TYPES,OFFERS,DESTINATIONS,FilterType,SortType,MAX_DAYS_TRIP_POINT};
+export {EVENT_TYPES,OFFERS,DESTINATIONS,MAX_DAYS_TRIP_POINT,DEFAULT_FILTER,DEFAULT_SORT_TYPE,UserAction,UpdateType,FilterType,SortType,AVAILABLE_OFFERS_FOR_TYPE};
