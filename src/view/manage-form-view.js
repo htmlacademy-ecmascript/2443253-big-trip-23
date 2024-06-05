@@ -1,8 +1,8 @@
 
 import AbstractStateFulView from '../framework/view/abstract-stateful-view.js';
 import {humanizeDate,capitalize} from '../utils/point.js';
-import {OFFERS,EVENT_TYPES, DESTINATIONS,MAX_DAYS_TRIP_POINT,AVAILABLE_OFFERS_FOR_TYPE} from '../const.js';
-import {BLANK_POINT} from '../model/points-model.js';
+import {EVENT_TYPES, MAX_DAYS_TRIP_POINT,DEFAULT_DESTINATION} from '../const.js';
+//import {BLANK_POINT} from '../model/points-model.js';
 import dayjs from 'dayjs';
 
 import flatpickr from 'flatpickr';
@@ -15,15 +15,20 @@ export default class FormCreateEditView extends AbstractStateFulView{
   #point = null;
   #datepicker = null;
   #handleFormSubmit = null;
-  #handleformCancel = null;
+  #handleFormCancelDelete = null;
   #destinationElement = null;
+  #pointsModel = null;
+  #handleformRollup = null;
 
-  constructor ({point,onSubmitClick,onCancelClick,isEditForm}){
+
+  constructor ({point,onSubmitClick,onCancelDeleteClick,isEditForm,pointsModel,onRollupClick}){
     super();
     this.#point = point;
     this._isEditForm = isEditForm;
+    this.#pointsModel = pointsModel;
     this.#handleFormSubmit = onSubmitClick;
-    this.#handleformCancel = onCancelClick;
+    this.#handleFormCancelDelete = onCancelDeleteClick;
+    this.#handleformRollup = onRollupClick;
     this._setState(FormCreateEditView.parsePointToState(this.#point));
     this._restoreHandlers();
   }
@@ -49,7 +54,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
     this._setDatePicker(this._state.dateFrom,'today',this._state.dateTo.fp_incr(-1),'#event-start-time-1',this.#dateFromChangeHandler);
     this._setDatePicker(this._state.dateTo,this._state.dateFrom,this._state.dateFrom.fp_incr(MAX_DAYS_TRIP_POINT),'#event-end-time-1',this.#dateToChangeHandler);
 
-    this.element.addEventListener('reset',this.#formCancelHandler);
+    this.element.addEventListener('reset',this.#formCancelDeleteHandler);
 
     if(this._isEditForm){
       this.element.querySelector('.event__rollup-btn').addEventListener('click',this.#hideClickHandler);
@@ -75,8 +80,8 @@ export default class FormCreateEditView extends AbstractStateFulView{
       case 'event__offer-checkbox': checkedElement = evt.target; break;
       default: return;
     }
-    this._state.availableOffers.map((offer) =>{
-      const id = `event-offer-${offer}-${this._state.id}`;
+    this._state.availableOffers.map((offer,index) =>{
+      const id = `event-offer-${index}-${this._state.id}`;
       if (checkedElement.id === id){
         //const index = newOffers.indexOf(offer);
         if(!checkedElement.checked){
@@ -105,7 +110,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
       availableOffers = [];
     evt.preventDefault();
     newType = EVENT_TYPES.find((typeItem) => evt.target.className.includes(typeItem));
-    availableOffers = AVAILABLE_OFFERS_FOR_TYPE [newType];
+    availableOffers = this.#pointsModel.adaptToClientAvailableOffers(newType);
     this._setState({
       type: newType,
       availableOffers: availableOffers,
@@ -119,19 +124,33 @@ export default class FormCreateEditView extends AbstractStateFulView{
 
   };
 
+  //Меняем пункт назначения
+  #destinationInputHandler = (evt)=>{
+    evt.preventDefault();
+    let newDest = this.#pointsModel.destinations.find((dest) => dest.name === evt.target.value);
+    if (!newDest){
+      newDest = DEFAULT_DESTINATION;
+    }
+    this.updateElement({
+      destination: this.#pointsModel.adaptToClientDestination(newDest)
+    });
+  };
 
+  //Меняем начальную дату
   #dateFromChangeHandler = ([userDate]) => {
     this.updateElement({
       dateFrom: userDate,
     });
   };
 
+  //Меняем конечную дату
   #dateToChangeHandler = ([userDate]) => {
     this.updateElement({
       dateTo: userDate,
     });
   };
 
+  //Меняем цену
   #priceInputHandler = (evt) => {
     evt.preventDefault();
     this._setState({
@@ -149,15 +168,17 @@ export default class FormCreateEditView extends AbstractStateFulView{
     this.#handleFormSubmit(FormCreateEditView.parseStateToPoint(this._state));
   };
 
+  //Клик на rollup
   #hideClickHandler = (evt) =>{
     evt.preventDefault();
-    this.#handleFormSubmit(this.#point);
+    this.#handleformRollup();
   };
 
 
-  #formCancelHandler = (evt) =>{
+  //Отмена добавления точки в форме создания или удаление в форме редактирования
+  #formCancelDeleteHandler = (evt) =>{
     evt.preventDefault();
-    this.#handleformCancel(FormCreateEditView.parseStateToPoint(this._state));
+    this.#handleFormCancelDelete(FormCreateEditView.parseStateToPoint(this._state));
   };
 
   reset(point) {
@@ -185,38 +206,37 @@ export default class FormCreateEditView extends AbstractStateFulView{
   }
 
   static parsePointToState(point) {
-    return {...point
+    return {...point,
+      isDisabled: false,
+      isSaving: false,
+      isDeleting: false
     };
   }
 
   static parseStateToPoint(state) {
-    return {...state};
+    const point = {...state};
+    delete point.isDisabled;
+    delete point.isSaving;
+    delete point.isDeleting;
+    return point;
   }
-
-  #destinationInputHandler = (evt)=>{
-    evt.preventDefault();
-    let newDest = DESTINATIONS.find((dest) => dest.town === evt.target.value);
-    if (!newDest){
-      newDest = BLANK_POINT.destination;
-    }
-    this.updateElement({
-      destination: newDest
-    });
-  };
 
 
   _createDestinationImage = (destination) =>{
-    const {name,foto} = destination;
-    return `
+    const {name,pictures} = destination;
+    if(name.length > 0 || pictures.length > 0) {
+      return `
     <section class="event__section  event__section--destination">
       <h3 class="event__section-title  event__section-title--destination">Destination</h3>
       <p class="event__destination-description">${name}</p>
       <div class="event__photos-container">
         <div class="event__photos-tape">
-        <img class="event__photo" src="${foto}" alt="Event photo">
+        ${pictures.map((picture)=>`<img class="event__photo" src="${picture.src}" alt=${picture.description}>`)}
         </div>
       </div>
     </section>`;
+    }
+    return '';
   };
 
 
@@ -226,12 +246,12 @@ export default class FormCreateEditView extends AbstractStateFulView{
   </div>`;
 
   _createEventOfferItem = (offer,checked,id,offerIndex) =>{
-    const {name,price} = offer;
+    const {title,price} = offer;
     return `
           <div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerIndex}-${id}" type="checkbox" name="event-offer-${name}" ${checked && 'checked'}>
+              <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerIndex}-${id}" type="checkbox" name="event-offer-${title}" ${checked && 'checked'}>
               <label class="event__offer-label" for="event-offer-${offerIndex}-${id}">
-                <span class="event__offer-title">${name}</span>
+                <span class="event__offer-title">${title}</span>
                 &plus;&euro;&nbsp;
                 <span class="event__offer-price">${price}</span>
               </label>
@@ -241,7 +261,21 @@ export default class FormCreateEditView extends AbstractStateFulView{
 
 
   _createEventForm(isEditFrom){
-    const {basePrice,dateFrom,dateTo,destination,offers,availableOffers,type,id} = this._state;
+    const {basePrice,dateFrom,dateTo,destination,offers,availableOffers,type,id,
+      isDeleting,isSaving,isDisabled
+    } = this._state;
+
+    let deleteCancelButtonText = '';
+
+    if (isEditFrom && isDeleting) {
+      deleteCancelButtonText = 'Deleting';
+    }else if (isEditFrom && !isDeleting){
+      deleteCancelButtonText = 'Delete';
+    } else {
+      deleteCancelButtonText = 'Cancel';
+    }
+
+    //const deleteButtonText = isEditFrom ? : isDeleting ? 'Deleting' : 'Delete';
     return `
     <form class="event event--edit" action="#" method="post">
   <header class="event__header">
@@ -266,9 +300,9 @@ export default class FormCreateEditView extends AbstractStateFulView{
           <label class="event__label  event__type-output" for="event-destination-1">
           ${capitalize(type)}
           </label>
-          <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination.town}" list="destination-list-${id}" placeholder = "Выберите пункт назначения">
+          <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination.town}" list="destination-list-${id}" placeholder = "Выберите пункт назначения" required>
           <datalist id="destination-list-${id}">
-            ${DESTINATIONS.map((dest) =>`<option value="${dest.town}"></option>`)}
+            ${this.#pointsModel.destinations.map((dest) =>`<option value="${dest.name}"></option>`)}
           </datalist>
         </div>
 
@@ -285,21 +319,24 @@ export default class FormCreateEditView extends AbstractStateFulView{
             <span class="visually-hidden">Price</span>
             &euro;
           </label>
-          <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price" value="${basePrice}">
+          <input class="event__input  event__input--price" id="event-price-1" type="number" min="1" placeholder=">0"name="event-price" value="${basePrice}"  required>
         </div>
 
-    <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-    <button class="event__reset-btn" type="reset">${isEditFrom ? 'Delete' : 'Cancel'}</button>
+    <button class="event__save-btn  btn  btn--blue" type="submit" ${isDisabled ? 'disabled' : ''}>${isSaving ? 'Saving' : 'Save'}</button>
+    <button class="event__reset-btn" type="reset" ${isDisabled ? 'disabled' : ''}>${deleteCancelButtonText}</button>
     ${isEditFrom ? `<button class="event__rollup-btn" type="button">
                <span class="visually-hidden">Open event</span>
              </button>` : ''}
 
   </header>
   <section class="event__details">
+
     <section class="event__section  event__section--offers">
-      <h3 class="event__section-title  event__section-title--offers">Offers</h3>
+
+      ${(availableOffers.length > 0) ? '<h3 class="event__section-title  event__section-title--offers">Offers</h3>' : ''}
+
       <div class="event__available-offers">
-    ${availableOffers.map((element) => this._createEventOfferItem(OFFERS[element],offers.includes(element),id,element)).join('')}
+    ${availableOffers.map((element,index) => this._createEventOfferItem(element,offers.includes(element),id,index)).join('')}
       </div>
     </section>
     ${destination.town ? this._createDestinationImage(destination) : ''}

@@ -1,5 +1,6 @@
 //Услуга
 const EVENT_TYPES = ['taxi','bus','train','ship','drive','flight','check-in','sightseeing','restaurant'];
+
 const AVAILABLE_OFFERS_FOR_TYPE = {
   'taxi':[0],
   'bus':[0,1],
@@ -32,6 +33,9 @@ const FilterType = {
   PRESENT: 'present',
   PAST: 'past',
 };
+const LOADING = 'init';
+
+
 const SortType = {
   DAY:'day',
   EVENT:'event',
@@ -49,11 +53,18 @@ const UpdateType = {
   SMALL: 'SMALL',
   MIDDLE: 'MIDDLE',
   BIG: 'BIG',
+  INIT: 'INIT'
+
 };
 
 const DEFAULT_FILTER = 'everything';
 const DEFAULT_SORT_TYPE = 'day';
+const DEFAULT_DESTINATION = '';
+const DEFAULT_TYPE_TRIP = 'flight';
 
 const MAX_DAYS_TRIP_POINT = '365';
+const CHECKED = 'checked';
 
-export {EVENT_TYPES,OFFERS,DESTINATIONS,MAX_DAYS_TRIP_POINT,DEFAULT_FILTER,DEFAULT_SORT_TYPE,UserAction,UpdateType,FilterType,SortType,AVAILABLE_OFFERS_FOR_TYPE};
+
+export {EVENT_TYPES,OFFERS,DESTINATIONS,MAX_DAYS_TRIP_POINT,DEFAULT_FILTER,DEFAULT_SORT_TYPE,UserAction,
+  UpdateType,FilterType,SortType,AVAILABLE_OFFERS_FOR_TYPE,LOADING,CHECKED,DEFAULT_DESTINATION,DEFAULT_TYPE_TRIP};

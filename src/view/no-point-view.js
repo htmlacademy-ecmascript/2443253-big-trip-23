@@ -21,6 +21,9 @@ export default class TripNoEventView extends AbstractView{
         return '<p class="trip-events__msg">There are no present events now</p>';
       case 'future':
         return '<p class="trip-events__msg">There are no future events now</p>';
+      case 'init':
+        return '<p class="trip-events__msg">Loading...</p>';
+
     }
   }
 

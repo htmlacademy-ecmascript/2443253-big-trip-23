@@ -4,21 +4,24 @@ import FormCreateEditView from '../view/manage-form-view.js';
 import TripNoEventView from '../view/no-point-view.js';
 import TripEventListView from '../view/trip-event-list-view.js';
 import PointPresenter from './point-presenter.js';
-
+import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
 
 import {render,remove,RenderPosition} from '../framework/render.js';
 import {BLANK_POINT} from '../model/points-model.js';
 import {generateSorter} from '../utils/sort.js';
 import {filter} from '../utils/filter.js';
 
-import { nanoid } from 'nanoid';
 
 import {sortDay, sortPrice, sortTime} from '../utils/point.js';
-import {SortType,DEFAULT_SORT_TYPE,UserAction,UpdateType, DEFAULT_FILTER} from '../const.js';
+import {SortType,DEFAULT_SORT_TYPE,UserAction,UpdateType, DEFAULT_FILTER,LOADING} from '../const.js';
 
+const BlockerTimeLimit = {
+  LOWER_LIMIT: 350,
+  UPPER_LIMIT: 1000,
+};
 export default class TripPresenter {
 
-  // #newTaskPresenter = null;
+
   //Коллекция презентеров точек маршрута
   #pointPresenters = new Map();
 
@@ -31,6 +34,11 @@ export default class TripPresenter {
   #pointsModel = null;
   #filterModel = null;
   #newEventComponent = null;
+  #loadingComponent = new TripNoEventView({currentFilter : LOADING});
+  #uiBlocker = new UiBlocker({
+    lowerLimit: BlockerTimeLimit.LOWER_LIMIT,
+    upperLimit: BlockerTimeLimit.UPPER_LIMIT
+  });
 
   #newPointButton = document.querySelector('.trip-main__event-add-btn');
 
@@ -52,6 +60,7 @@ export default class TripPresenter {
     this.#tripContainer = tripContainer;
     this.#pointsModel = pointsModel;
     this.#filterModel = filterModel;
+    this.#newPointButton.disabled = true;
 
 
     this.#pointsModel.addObserver(this.#handleModelEvent);
@@ -62,28 +71,53 @@ export default class TripPresenter {
 
   }
 
-  #handleViewAction = (actionType, updateType, update) => {
-
+  //Обновление модели
+  #handleViewAction = async (actionType, updateType, update) => {
     // Здесь будем вызывать обновление модели.
     // actionType - действие пользователя, нужно чтобы понять, какой метод модели вызвать
     // updateType - тип изменений, нужно чтобы понять, что после нужно обновить
     // update - обновленные данные
+    this.#uiBlocker.block();
     switch (actionType) {
       case UserAction.UPDATE_POINT:
-        this.#pointsModel.updateTask(updateType, update);
+        this.#pointPresenters.get(update.id).setSaving();
+        try{
+          await this.#pointsModel.updatePoint(updateType, update);
+        } catch(err){
+          this.#pointPresenters.get(update.id).setAborting();
+          this.#uiBlocker.unblock();
+          return false;
+        }
         break;
       case UserAction.ADD_POINT:
-        this.#pointsModel.addTask(updateType, update);
+        this.setSaving();
+        try{
+          await this.#pointsModel.addPoint(updateType, update);
+        } catch(err){
+          this.setAborting();
+          this.#uiBlocker.unblock();
+          return false;
+        }
 
         break;
       case UserAction.DELETE_POINT:
-        this.#pointsModel.deleteTask(updateType, update);
+        this.#pointPresenters.get(update.id).setDeleting();
+        try{
+          await this.#pointsModel.deletePoint(updateType, update);
+        }catch(err){
+          this.#pointPresenters.get(update.id).setAborting();
+          this.#uiBlocker.unblock();
+          return false;
+        }
         break;
     }
+    this.#uiBlocker.unblock();
+    return true;
   };
 
-  #handleModelEvent = (updateType, data) => {
 
+  //Реакция на обновление модели
+  #handleModelEvent = (updateType, data) => {
     // В зависимости от типа изменений решаем, что делать:
     // - обновить часть списка (например, когда поменялось описание)
     // - обновить список (например, когда задача ушла в архив)
@@ -95,15 +129,19 @@ export default class TripPresenter {
         break;
       case UpdateType.MIDDLE:
         // - обновить список ()
-        this.#clearPointsSection();
-        this.#renderTrip();
-
+        this.#clearPointPresenters();
+        this.#renderPoints(this.points);
         break;
       case UpdateType.BIG:
         // - обновить всю доску (например, при переключении фильтра)
         this.#clearPointsSection(true);
         this.#renderTrip();
 
+        break;
+      case UpdateType.INIT:
+        this.#newPointButton.disabled = false;
+        remove(this.#loadingComponent);
+        this.#renderTrip();
         break;
     }
   };
@@ -114,8 +152,8 @@ export default class TripPresenter {
     this.#sorters = generateSorter(this.#pointsModel.points);
 
 
+    render(this.#loadingComponent, this.#tripContainer,RenderPosition.AFTERBEGIN);
     render(this.#tripEventListComponent, this.#tripContainer);
-    this.#renderTrip();
   }
 
 
@@ -136,9 +174,11 @@ export default class TripPresenter {
 
     evt.preventDefault();
     if (!this.#newEventComponent){
-      this.#newEventComponent = new FormCreateEditView({point:BLANK_POINT,
+      this.#newEventComponent = new FormCreateEditView({
+        point: {...BLANK_POINT,availableOffers: this.#pointsModel.adaptToClientAvailableOffers(BLANK_POINT.type)},
         onSubmitClick: this.#newEventSubmitHandler,
-        onCancelClick: this.#newEventCancelHandler,
+        onCancelDeleteClick: this.#newEventCancelHandler,
+        pointsModel: this.#pointsModel,
         isEditForm : false});
       render(this.#newEventComponent, this.#tripContainer,RenderPosition.AFTERBEGIN);
 
@@ -149,6 +189,27 @@ export default class TripPresenter {
     }
   };
 
+  //Установка флагов для обратной связи
+  setSaving() {
+    this.#newEventComponent.updateElement({
+      isDisabled: true,
+      isSaving: true,
+    });
+  }
+
+  //Тряска при ошибке обращения к серверу
+  setAborting() {
+    const resetFormState = () => {
+      this.#newEventComponent.updateElement({
+        isDisabled: false,
+        isSaving: false,
+        isDeleting: false,
+      });
+    };
+
+    this.#newEventComponent.shake(resetFormState);
+  }
+
   //Добавляем точку
   #newEventSubmitHandler = (newpoint)=>{
     this.#newPointButton.disabled = false;
@@ -156,16 +217,18 @@ export default class TripPresenter {
     this.#handleViewAction(
       UserAction.ADD_POINT,
       UpdateType.MIDDLE,
-      // Пока у нас нет сервера, который бы после сохранения
-      // выдывал честный id задачи, нам нужно позаботиться об этом самим
-      {id: nanoid(), ...newpoint},
-    );
-    remove(this.#newEventComponent);
-    this.#newEventComponent = null;
+      newpoint
+    ).then((value) => {
+      if (value){
+        remove(this.#newEventComponent);
+        this.#newEventComponent = null;
+      }
+    });
+
 
   };
 
-  //Отмена добавления точки или удаление в форме редактирования
+  //Отмена добавления точки
   #newEventCancelHandler = ()=>{
 
     this.#newPointButton.disabled = false;
@@ -193,14 +256,11 @@ export default class TripPresenter {
     this.#clearPointPresenters();
     if (resetSort) {
       this.#currentSortType = DEFAULT_SORT_TYPE;
+      this.#sortListView.resetSorters();
     }
     remove(this.#sortListView);
     remove(this.#filterListView);
     remove(this.#tripNoEventView);
-    this.#sortListView = null;
-    this.#filterListView = null;
-    this.#tripNoEventView = null;
-
   }
 
 
@@ -234,7 +294,8 @@ export default class TripPresenter {
   #renderPoint (point) {
     const pointPresenter = new PointPresenter({tripEventListComponent:this.#tripEventListComponent.element,
       onPointUpdate: this.#handleViewAction,
-      onModeChange: this.#handleModeChange});
+      onModeChange: this.#handleModeChange,
+      pointsModel: this.#pointsModel});
     pointPresenter.init(point);
     this.#pointPresenters.set(point.id,pointPresenter);
   }
@@ -249,14 +310,7 @@ export default class TripPresenter {
       presenter.destroy();
     });
     this.#pointPresenters.clear();
-    //this.#newTaskPresenter.destroy();
   }
-
-  // #handlePointUpdate = (updatedPoint) =>{
-  //   this.#pointsModel.points = updateItem(this.#pointsModel.points, updatedPoint);
-  //   this.#pointPresenters.get(updatedPoint.id).init(updatedPoint);
-  // };
-
 
   get points() {
     const filterType = this.#filterModel.filter;

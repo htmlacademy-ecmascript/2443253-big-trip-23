@@ -2,7 +2,7 @@ import {render,replace,remove,RenderPosition} from '../framework/render.js';
 import TotalInfoView from '../view/total-info-view.js';
 import {sortDay} from '../utils/point.js';
 import dayjs from 'dayjs';
-import {OFFERS} from '../const.js';
+
 
 export default class totalInfoPresenter {
 
@@ -41,7 +41,7 @@ export default class totalInfoPresenter {
       }
       totalTripPrice += +point.basePrice;
       const priceOffers = point.offers.reduce((accu,current) =>
-        current || current === 0 ? accu + OFFERS[current].price : 0,
+        current || current === 0 ? accu + current.price : 0,
       0);
       totalTripPrice += priceOffers;
 
