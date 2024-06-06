@@ -5,6 +5,9 @@ const DATE_FORMAT = 'DD/MM/YY HH:mm';
 const DATE_FORMAT_WITHOUT_TIME = 'DD/MM/YY';
 
 
+function addMinutes(date, minutes) {
+  return new Date(date.getTime() + minutes * 60000);
+}
 //Вернуть строку с первым символом в верхнем регистре
 const capitalize = (s) => s && s[0].toUpperCase() + s.slice(1);
 
@@ -13,6 +16,7 @@ function humanizeDate(dueDate,dateFormat = DATE_FORMAT) {
   return dueDate ? dayjs(dueDate).format(dateFormat) : '';
 }
 
+//Перевод минутной разницы в разницу формата дни, часы, минуты
 function humanizeDiffDates (diffMinutes){
   const days = Math.trunc(diffMinutes / 60 / 24),
     hours = Math.trunc((diffMinutes - days * 24 * 60) / 60),
@@ -68,5 +72,5 @@ function sortPrice(pointA, pointB) {
 
 
 export{humanizeDate,capitalize,isPointToday, isPointWillBe, isPointExpired,comparePrice,compareTime,sortDay,sortTime,sortPrice,DATE_FORMAT_WITHOUT_TIME,
-  humanizeDiffDates
+  humanizeDiffDates,addMinutes
 };

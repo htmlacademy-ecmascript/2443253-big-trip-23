@@ -1,6 +1,7 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import {capitalize} from '..//utils/point.js';
-import { DEFAULT_SORT_TYPE } from '../const.js';
+import { DEFAULT_SORT_TYPE, SortType,CHECKED } from '../const.js';
+
 
 const statesSort = {
   'day': 'checked',
@@ -15,7 +16,7 @@ export default class SortListView extends AbstractView{
 
   #sorters = null;
   #handleSortClick = null;
-  #prevSortType = 'day';
+  #prevSortType = SortType.DAY;
 
   constructor({sorters,onSortClick,currentSortType}) {
     super();
@@ -27,10 +28,9 @@ export default class SortListView extends AbstractView{
   }
 
   resetSorters(){
-    statesSort[DEFAULT_SORT_TYPE] = 'checked';
-    statesSort['price'] = '';
-    statesSort['time'] = '';
-    //this.#handleSortClick(DEFAULT_SORT_TYPE);
+    statesSort[DEFAULT_SORT_TYPE] = CHECKED;
+    statesSort[SortType.PRICE] = '';
+    statesSort[SortType.TIME] = '';
   }
 
   #SortListHandler = (evt) => {
@@ -38,10 +38,10 @@ export default class SortListView extends AbstractView{
     if (evt.target.tagName !== 'LABEL') {
       return;
     }
-    if (this.#prevSortType !== sortType && ((sortType === 'price') || (sortType === 'time'))){
+    if (this.#prevSortType !== sortType && ((sortType === SortType.PRICE) || (sortType === SortType.TIME) || (sortType === SortType.DAY))){
       statesSort[this.#prevSortType] = '';
       this.#prevSortType = sortType;
-      statesSort[sortType] = 'checked';
+      statesSort[sortType] = CHECKED;
 
       this.#handleSortClick(sortType);
     }

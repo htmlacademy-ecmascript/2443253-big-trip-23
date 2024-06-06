@@ -1,69 +1,170 @@
-import {getRandomPoint} from '../mock/point.js';
 import Observable from '../framework/observable.js';
-import {AVAILABLE_OFFERS_FOR_TYPE} from '../const.js';
+import {addMinutes} from '../utils/point.js';
+import {DEFAULT_TYPE_TRIP,DEFAULT_DESTINATION} from '../const.js';
+import {UpdateType} from '../const.js';
+import dayjs from 'dayjs';
 
 const POINT_COUNT = 5;
 
 const BLANK_POINT = {
   basePrice: 0,
   dateFrom: new Date(),
-  dateTo: new Date(),
-  destination: {name:'',town:'',foto:''},
+  dateTo: addMinutes(new Date(),10),
+  destination: {name:'',town: DEFAULT_DESTINATION,pictures:[]},
   isFavorite: false,
-  availableOffers: AVAILABLE_OFFERS_FOR_TYPE ['flight'],
+  availableOffers: [],
   offers : [],
-  type: 'flight'
+  type: DEFAULT_TYPE_TRIP
 };
 
 
+//Класс модели точки маршрута
 export default class PointsModel extends Observable{
-  #points = Array.from({length: POINT_COUNT}, getRandomPoint);
+  #points = [];
+  #destinations = null;
+  #offers = null;
+  #pointsApiService = null;
+
+  constructor({pointsApiService}) {
+    super();
+    this.#pointsApiService = pointsApiService;
+  }
 
   get points() {
     return this.#points;
   }
 
-  //Метод обновления задачи
-  updateTask(updateType, update) {
-    const index = this.#points.findIndex((task) => task.id === update.id);
+  get offers() {
+    return this.#offers;
+  }
 
-    if (index === -1) {
-      throw new Error('Can\'t update unexisting task');
+  get destinations() {
+    return this.#destinations;
+  }
+
+  async init() {
+    try {
+      this.#destinations = await this.#pointsApiService.destinations;
+      this.#offers = await this.#pointsApiService.offers;
+      const points = await this.#pointsApiService.points;
+      this.#points = points.map((point) => this.#adaptToClient(point));
+
+
+    } catch(err) {
+      this.#destinations = [];
     }
 
-    this.#points = [
-      ...this.#points.slice(0, index),
-      update,
-      ...this.#points.slice(index + 1),
-    ];
+    this._notify(UpdateType.INIT);
+  }
 
-    this._notify(updateType, update);
+
+  //Метод обновления задачи
+
+  async updatePoint(updateType, update) {
+    const index = this.#points.findIndex((point) => point.id === update.id);
+
+    if (index === -1) {
+      throw new Error('Can\'t update unexisting point');
+    }
+    try {
+      const response = await this.#pointsApiService.updatePoint(update);
+      const updatedPoint = this.#adaptToClient(response);
+      this.#points = [
+        ...this.#points.slice(0, index),
+        updatedPoint,
+        ...this.#points.slice(index + 1),
+      ];
+      this._notify(updateType, updatedPoint);
+    } catch(err) {
+      throw new Error('Can\'t update point');
+    }
   }
 
   //Метод добавления задачи
-  addTask(updateType, update) {
-    this.#points = [
-      update,
-      ...this.#points,
-    ];
+  async addPoint(updateType, update) {
 
-    this._notify(updateType, update);
+    try {
+      const response = await this.#pointsApiService.addPoint(update);
+      const newPoint = this.#adaptToClient(response);
+      this.#points = [
+        newPoint,
+        ...this.#points,
+      ];
+      this._notify(updateType, newPoint);
+    } catch(err) {
+      throw new Error('Can\'t add point');
+    }
+
   }
 
   //Метод удаления задачи
-  deleteTask(updateType, update) {
-    const index = this.#points.findIndex((task) => task.id === update.id);
+  async deletePoint(updateType, update) {
+    const index = this.#points.findIndex((point) => point.id === update.id);
 
     if (index === -1) {
       throw new Error('Can\'t delete unexisting point');
     }
 
-    this.#points = [
-      ...this.#points.slice(0, index),
-      ...this.#points.slice(index + 1),
-    ];
-
-    this._notify(updateType);
+    try {
+      await this.#pointsApiService.deletePoint(update);
+      this.#points = [
+        ...this.#points.slice(0, index),
+        ...this.#points.slice(index + 1),
+      ];
+      this._notify(updateType);
+    } catch(err) {
+      throw new Error('Can\'t delete point');
+    }
   }
+
+  adaptToClientDestination(destination){
+    return {
+      name : destination.description,
+      town : destination.name,
+      id : destination.id,
+      pictures : destination.pictures
+    };
+
+  }
+
+  //Доступные предложения для данного типа путешествия
+  adaptToClientAvailableOffers(type){
+    return this.#offers.find((offer) => offer.type === type).offers;
+  }
+
+  //Выбранные предложения для данной точки
+  #adaptToClientOffers(point,offers){
+    const pointTypeOffers = offers.find((offer) => offer.type === point.type);
+    return pointTypeOffers.offers.filter((offer) =>point.offers.includes(offer.id));
+
+  }
+
+  #adaptToClient(point) {
+
+    const adaptedPoint = {...point,
+      basePrice: point['base_price'],
+      dateFrom: point['date_from'] !== null ? new Date(point['date_from']) : point['date_from'], // На клиенте дата хранится как экземпляр Date
+      dateTo: point['date_to'] !== null ? new Date(point['date_to']) : point['date_to'], // На клиенте дата хранится как экземпляр Date
+      isFavorite: point['is_favorite'],
+      availableOffers : this.adaptToClientAvailableOffers(point.type),
+      destination : this.adaptToClientDestination(this.#destinations.find((dest) => dest.id === point.destination)),
+      offers : this.#adaptToClientOffers(point,this.#offers)
+    };
+
+    // Ненужные ключи мы удаляем
+    delete adaptedPoint['base_price'];
+    delete adaptedPoint['date_from'];
+    delete adaptedPoint['date_to'];
+    delete adaptedPoint['is_favorite'];
+
+
+    //Добавим продолжительность
+    return {time: dayjs(adaptedPoint.dateTo).diff(dayjs(adaptedPoint.dateFrom), 'minute'),
+      ...adaptedPoint
+    };
+
+  }
+
+
 }
 export {POINT_COUNT,BLANK_POINT};

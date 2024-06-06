@@ -9,20 +9,24 @@ const Mode = {
   EDITING:'EDITING',
 };
 
+
 export default class PointPresenter {
   #tripEventListComponent = null;
   #pointViewComponent = null;
   #pointEditComponent = null;
   #handlePointUpdate = null;
   #handleModeChange = null;
+  #pointsModel = null;
   #point = null;
   #mode = Mode.DEFAULT;
 
 
-  constructor({tripEventListComponent,onPointUpdate,onModeChange}){
+  constructor({tripEventListComponent,onPointUpdate,onModeChange,pointsModel}){
     this.#tripEventListComponent = tripEventListComponent;
     this.#handlePointUpdate = onPointUpdate;
     this.#handleModeChange = onModeChange;
+    this.#pointsModel = pointsModel;
+
   }
 
   init(point){
@@ -39,7 +43,9 @@ export default class PointPresenter {
     this.#pointEditComponent = new FormCreateEditView({
       point : this.#point,
       onSubmitClick: this.#submitFormHandler,
-      onCancelClick: this.#resetEditFormHandler,
+      onCancelDeleteClick: this.#resetEditFormHandler,
+      onRollupClick: this.#rollupFormHandler,
+      pointsModel: this.#pointsModel,
       isEditForm : true
     });
 
@@ -69,6 +75,35 @@ export default class PointPresenter {
     }
   }
 
+  setSaving() {
+    this.#pointEditComponent.updateElement({
+      isDisabled: true,
+      isSaving: true,
+    });
+  }
+
+  setDeleting() {
+    if (this.#mode === Mode.EDITING) {
+      this.#pointEditComponent.updateElement({
+        isDisabled: true,
+        isDeleting: true,
+      });
+    }
+  }
+
+  setAborting() {
+    const resetFormState = () => {
+      this.#pointEditComponent.updateElement({
+        isDisabled: false,
+        isSaving: false,
+        isDeleting: false,
+      });
+    };
+    if (this.#mode === Mode.EDITING) {
+      this.#pointEditComponent.shake(resetFormState);
+    }
+  }
+
   destroy(){
     remove(this.#pointViewComponent);
     remove(this.#pointEditComponent);
@@ -95,13 +130,16 @@ export default class PointPresenter {
   };
 
   #resetEditFormHandler = (point)=>{
-    this.#pointEditComponent.reset(this.#point);
     this.#handlePointUpdate(
       UserAction.DELETE_POINT,
       UpdateType.MIDDLE,
       point,
     );
+  };
 
+  #rollupFormHandler = () => {
+    this.#pointEditComponent.reset(this.#point);
+    this.#replaceFormToPoint();
   };
 
   #escKeyDownHandler = (evt) => {

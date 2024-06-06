@@ -1,6 +1,5 @@
 import {humanizeDate,capitalize,DATE_FORMAT_WITHOUT_TIME,humanizeDiffDates} from '..//utils/point.js';
 import AbstractView from '../framework/view/abstract-view.js';
-import {OFFERS} from '../const.js';
 
 
 /**Наследуемый класс для отображения точки путешествия
@@ -64,10 +63,10 @@ export default class TripEventView extends AbstractView{
       <h4 class="visually-hidden">Offers:</h4>
       <ul class="event__selected-offers">
         <li class="event__offer">
-          <span class="event__offer-title">${offersForView.map((el) => OFFERS[el].name).join(', ')}
+          <span class="event__offer-title">${offersForView.map((el) => el.title).join(', ')}
             </span>
           ${offersForView.length > 0 ? '&plus;&euro;&nbsp' : ''}
-          <span class="event__offer-price">${offersForView.map((el) => OFFERS[el].price).join(', ')}</span>
+          <span class="event__offer-price">${offersForView.map((el) => el.price).join(', ')}</span>
         </li>
       </ul>
       <button class="event__favorite-btn ${this.#isClassFavorite(isFavorite)}" type="button">
