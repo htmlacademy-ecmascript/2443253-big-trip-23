@@ -70,13 +70,7 @@ export default class PointsApiService extends ApiService {
 
     };
 
-    // Ненужные ключи мы удаляем
-    // delete adaptedPoint.basePrice;
-    // delete adaptedPoint.dateFrom;
-    // delete adaptedPoint.dateTo;
-    // delete adaptedPoint.isFavorite;
-    // delete adaptedPoint.time;
-    // delete adaptedPoint.availableOffers;
+
 
     //Добавим продолжительность, адаптируем пункты назначения и предложения
     return adaptedPoint;
