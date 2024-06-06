@@ -70,8 +70,6 @@ export default class PointsApiService extends ApiService {
 
     };
 
-
-
     //Добавим продолжительность, адаптируем пункты назначения и предложения
     return adaptedPoint;
 
