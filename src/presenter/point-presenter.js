@@ -104,11 +104,18 @@ export default class PointPresenter {
     }
   }
 
-  destroy(){
-    remove(this.#pointViewComponent);
-    remove(this.#pointEditComponent);
+  #replaceFormToPoint(){
+    replace(this.#pointViewComponent,this.#pointEditComponent);
+    document.removeEventListener('keydown', this.#escKeyDownHandler);
+    this.#mode = Mode.DEFAULT;
   }
 
+  #replacePointToForm(){
+    replace(this.#pointEditComponent,this.#pointViewComponent);
+    document.addEventListener('keydown', this.#escKeyDownHandler);
+    this.#handleModeChange();
+    this.#mode = Mode.EDITING;
+  }
 
   #favoriteClickHandler = () =>{
     this.#handlePointUpdate(
@@ -151,18 +158,9 @@ export default class PointPresenter {
   };
 
 
-  #replaceFormToPoint(){
-    replace(this.#pointViewComponent,this.#pointEditComponent);
-    document.removeEventListener('keydown', this.#escKeyDownHandler);
-    this.#mode = Mode.DEFAULT;
+  destroy(){
+    remove(this.#pointViewComponent);
+    remove(this.#pointEditComponent);
   }
-
-  #replacePointToForm(){
-    replace(this.#pointEditComponent,this.#pointViewComponent);
-    document.addEventListener('keydown', this.#escKeyDownHandler);
-    this.#handleModeChange();
-    this.#mode = Mode.EDITING;
-  }
-
 
 }

@@ -11,6 +11,10 @@ export default class TripNoEventView extends AbstractView{
     this.#currentFilter = currentFilter;
   }
 
+  get template() {
+    return this.#selectItemTemplate(this.#currentFilter);
+  }
+
   #selectItemTemplate(filterType = 'everthing'){
     switch (filterType){
       case 'everything':
@@ -23,11 +27,10 @@ export default class TripNoEventView extends AbstractView{
         return '<p class="trip-events__msg">There are no future events now</p>';
       case 'init':
         return '<p class="trip-events__msg">Loading...</p>';
+      case 'failload':
+        return '<p class="trip-events__msg">Failed to load latest route information</p>';
 
     }
   }
 
-  get template() {
-    return this.#selectItemTemplate(this.#currentFilter);
-  }
 }

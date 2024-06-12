@@ -1,7 +1,6 @@
 import AbstractView from '../framework/view/abstract-view.js';
 
 export default class TotalInfoView extends AbstractView{
-  #pointsModel = null;
   #totalPrice = null;
   #totalTripPoints = null;
   #totalDates = null;
@@ -16,6 +15,10 @@ export default class TotalInfoView extends AbstractView{
 
   }
 
+  get template() {
+    return this.#createTotalInfoTemplate(this.#totalDates,this.#totalPrice);
+  }
+
   #makeTotalPathTemplate(totalTripPoints = [], abbreviatedPath = false){
     if(abbreviatedPath){
       return `${totalTripPoints[0]} &mdash;&nbsp ... &mdash;&nbsp ${totalTripPoints[1]}`;
@@ -24,7 +27,7 @@ export default class TotalInfoView extends AbstractView{
     }
   }
 
-  #totalInfoTemplate(totalDates = '',totalPrice = 0){
+  #createTotalInfoTemplate(totalDates = '',totalPrice = 0){
     return (
       `<section class="trip-main__trip-info  trip-info">
             <div class="trip-info__main">
@@ -41,7 +44,4 @@ export default class TotalInfoView extends AbstractView{
     );
   }
 
-  get template() {
-    return this.#totalInfoTemplate(this.#totalDates,this.#totalPrice);
-  }
 }

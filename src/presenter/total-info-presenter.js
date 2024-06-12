@@ -30,7 +30,7 @@ export default class totalInfoPresenter {
       return;
     }
 
-
+    //Одинаковые ли все направления
     const isAllSame = points.every((elem,index,array) => elem.destination.town === array[0].destination.town);
 
     //Посчитаем путь, дaты и общую стоимость
@@ -73,8 +73,6 @@ export default class totalInfoPresenter {
     replace(this.#totalInfoView, prevTotalInfoView);
 
     remove(prevTotalInfoView);
-
-
   }
 
   //Обработчик события подписки на изменение модели
