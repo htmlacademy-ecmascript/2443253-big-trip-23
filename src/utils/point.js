@@ -2,7 +2,8 @@
 import dayjs from 'dayjs';
 
 const DATE_FORMAT = 'DD/MM/YY HH:mm';
-const DATE_FORMAT_WITHOUT_TIME = 'DD/MM/YY';
+const DATE_FORMAT_ONLY_TIME = 'HH:mm';
+const DATE_FORMAT_WITHOUT_TIME = 'MMM DD';
 
 
 function addMinutes(date, minutes) {
@@ -16,7 +17,7 @@ function humanizeDate(dueDate,dateFormat = DATE_FORMAT) {
   return dueDate ? dayjs(dueDate).format(dateFormat) : '';
 }
 
-//Перевод минутной разницы в разницу формата дни, часы, минуты
+//Перевод минутной разницы в разницу формата: дни, часы, минуты
 function humanizeDiffDates (diffMinutes){
   const days = Math.trunc(diffMinutes / 60 / 24),
     hours = Math.trunc((diffMinutes - days * 24 * 60) / 60),
@@ -26,11 +27,11 @@ function humanizeDiffDates (diffMinutes){
   if (diffMinutes < 60){
     return `${minutes}M`;
   } else if (diffMinutes > 60 && diffMinutes < 1440){
-    return `${hours}H ${minutes}M`;
+    return `${hours < 10 ? `0${ hours}` : hours}H ${minutes < 10 ? `0${ minutes}` : minutes}M`;
   } else if (diffMinutes > 1440){
     return `${days}D
-            ${hours}H
-            ${minutes}M`;
+            ${hours < 10 ? `0${ hours}` : hours}H
+            ${minutes < 10 ? `0${ minutes}` : minutes}M`;
   }
 
 
@@ -71,6 +72,7 @@ function sortPrice(pointA, pointB) {
 }
 
 
-export{humanizeDate,capitalize,isPointToday, isPointWillBe, isPointExpired,comparePrice,compareTime,sortDay,sortTime,sortPrice,DATE_FORMAT_WITHOUT_TIME,
-  humanizeDiffDates,addMinutes
+export{humanizeDate,capitalize,isPointToday, isPointWillBe, isPointExpired,comparePrice,compareTime,sortDay,sortTime,
+  sortPrice,DATE_FORMAT_WITHOUT_TIME,DATE_FORMAT,
+  humanizeDiffDates,addMinutes,DATE_FORMAT_ONLY_TIME
 };

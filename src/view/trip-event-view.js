@@ -1,4 +1,4 @@
-import {humanizeDate,capitalize,DATE_FORMAT_WITHOUT_TIME,humanizeDiffDates} from '..//utils/point.js';
+import {humanizeDate,capitalize,DATE_FORMAT_WITHOUT_TIME,DATE_FORMAT_ONLY_TIME,humanizeDiffDates} from '../utils/point.js';
 import AbstractView from '../framework/view/abstract-view.js';
 
 
@@ -9,7 +9,7 @@ export default class TripEventView extends AbstractView{
   #point = null;
   #handleEventClick = null;
   #handleFavoriteClick = null;
-
+  #isClassFavorite = (isFavorite) => isFavorite ? 'event__favorite-btn--active' : '';
 
   constructor ({point, onEditClick,onFavoriteClick}){
     super();
@@ -22,19 +22,6 @@ export default class TripEventView extends AbstractView{
     this.element.querySelector('.event__favorite-btn')
       .addEventListener('click', this.#favoriteClickHandler);
   }
-
-  #isClassFavorite = (isFavorite) => isFavorite ? 'event__favorite-btn--active' : '';
-
-  #favoriteClickHandler = (evt) =>{
-    evt.preventDefault();
-    this.#handleFavoriteClick();
-  };
-
-  #editClickHandler = (evt)=> {
-    evt.preventDefault();
-    this.#handleEventClick();
-  };
-
 
   get template() {
     const {basePrice,dateFrom,dateTo,time,destination,isFavorite,offers : pointoffers,availableOffers,type} = this.#point;
@@ -51,9 +38,9 @@ export default class TripEventView extends AbstractView{
       <h3 class="event__title">${capitalize(type)} ${destination.town}</h3>
       <div class="event__schedule">
         <p class="event__time">
-          <time class="event__start-time" datetime=${dateFrom}>${humanizeDate(dateFrom)}</time>
+          <time class="event__start-time" datetime=${dateFrom}>${humanizeDate(dateFrom,DATE_FORMAT_ONLY_TIME)}</time>
           &mdash;
-          <time class="event__end-time" datetime=${dateTo}>${humanizeDate(dateTo)}</time>
+          <time class="event__end-time" datetime=${dateTo}>${humanizeDate(dateTo,DATE_FORMAT_ONLY_TIME)}</time>
         </p>
         <p class="event__duration">${humanizeDiffDates(time)}</p>
       </div>
@@ -81,4 +68,15 @@ export default class TripEventView extends AbstractView{
     </div>
   </li>`;
   }
+
+  #favoriteClickHandler = (evt) =>{
+    evt.preventDefault();
+    this.#handleFavoriteClick();
+  };
+
+  #editClickHandler = (evt)=> {
+    evt.preventDefault();
+    this.#handleEventClick();
+  };
+
 }

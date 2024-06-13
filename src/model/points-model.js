@@ -1,16 +1,17 @@
 import Observable from '../framework/observable.js';
 import {addMinutes} from '../utils/point.js';
-import {DEFAULT_TYPE_TRIP,DEFAULT_DESTINATION} from '../const.js';
+import {DEFAULT_TYPE_TRIP} from '../const.js';
 import {UpdateType} from '../const.js';
 import dayjs from 'dayjs';
 
 const POINT_COUNT = 5;
 
+//Шаблон новой точки маршрута
 const BLANK_POINT = {
   basePrice: 0,
   dateFrom: new Date(),
   dateTo: addMinutes(new Date(),10),
-  destination: {name:'',town: DEFAULT_DESTINATION,pictures:[]},
+  destination: {name:'', town: '', pictures:[]},
   isFavorite: false,
   availableOffers: [],
   offers : [],
@@ -43,6 +44,7 @@ export default class PointsModel extends Observable{
   }
 
   async init() {
+    let isSuccessLoad = true;
     try {
       this.#destinations = await this.#pointsApiService.destinations;
       this.#offers = await this.#pointsApiService.offers;
@@ -52,9 +54,10 @@ export default class PointsModel extends Observable{
 
     } catch(err) {
       this.#destinations = [];
+      isSuccessLoad = false;
     }
 
-    this._notify(UpdateType.INIT);
+    this._notify(UpdateType.INIT,isSuccessLoad);
   }
 
 

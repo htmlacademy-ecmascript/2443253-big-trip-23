@@ -104,19 +104,30 @@ export default class PointPresenter {
     }
   }
 
-  destroy(){
-    remove(this.#pointViewComponent);
-    remove(this.#pointEditComponent);
+  #replaceFormToPoint(){
+    replace(this.#pointViewComponent,this.#pointEditComponent);
+    document.removeEventListener('keydown', this.#escKeyDownHandler);
+    this.#mode = Mode.DEFAULT;
   }
 
 
+  #replacePointToForm(){
+    replace(this.#pointEditComponent,this.#pointViewComponent);
+    document.addEventListener('keydown', this.#escKeyDownHandler);
+    this.#handleModeChange();
+    this.#mode = Mode.EDITING;
+  }
+
+  //-------------------------------------------------------Обработчики-----------------------------------------------------
+  //Нажатие звездочки
   #favoriteClickHandler = () =>{
     this.#handlePointUpdate(
-      UserAction.UPDATE_POINT,
+      UserAction.CHANGE_FAVORITE,
       UpdateType.MIDDLE,
       {...this.#point, isFavorite: !this.#point.isFavorite});
   };
 
+  //Клик на редактирование
   #editClickHandler = () => {
     this.#replacePointToForm(this.#pointViewComponent,this.#pointEditComponent);
   };
@@ -126,9 +137,10 @@ export default class PointPresenter {
       UserAction.UPDATE_POINT,
       UpdateType.MIDDLE,
       point);
-    this.#replaceFormToPoint();
+
   };
 
+  //Клик на удаление
   #resetEditFormHandler = (point)=>{
     this.#handlePointUpdate(
       UserAction.DELETE_POINT,
@@ -137,6 +149,7 @@ export default class PointPresenter {
     );
   };
 
+  //Клик на закрытие редактирования
   #rollupFormHandler = () => {
     this.#pointEditComponent.reset(this.#point);
     this.#replaceFormToPoint();
@@ -147,22 +160,14 @@ export default class PointPresenter {
       evt.preventDefault();
       this.#pointEditComponent.reset(this.#point);
       this.#replaceFormToPoint();
+
     }
   };
 
 
-  #replaceFormToPoint(){
-    replace(this.#pointViewComponent,this.#pointEditComponent);
-    document.removeEventListener('keydown', this.#escKeyDownHandler);
-    this.#mode = Mode.DEFAULT;
+  destroy(){
+    remove(this.#pointViewComponent);
+    remove(this.#pointEditComponent);
   }
-
-  #replacePointToForm(){
-    replace(this.#pointEditComponent,this.#pointViewComponent);
-    document.addEventListener('keydown', this.#escKeyDownHandler);
-    this.#handleModeChange();
-    this.#mode = Mode.EDITING;
-  }
-
 
 }

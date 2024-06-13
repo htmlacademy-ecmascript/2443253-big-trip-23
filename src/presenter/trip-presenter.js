@@ -13,7 +13,7 @@ import {filter} from '../utils/filter.js';
 
 
 import {sortDay, sortPrice, sortTime} from '../utils/point.js';
-import {SortType,DEFAULT_SORT_TYPE,UserAction,UpdateType, DEFAULT_FILTER,LOADING} from '../const.js';
+import {SortType,DEFAULT_SORT_TYPE,UserAction,UpdateType, DEFAULT_FILTER,LOADING,FAIL_LOAD} from '../const.js';
 
 const BlockerTimeLimit = {
   LOWER_LIMIT: 350,
@@ -34,7 +34,13 @@ export default class TripPresenter {
   #pointsModel = null;
   #filterModel = null;
   #newEventComponent = null;
+  //Компонент LOADING...
   #loadingComponent = new TripNoEventView({currentFilter : LOADING});
+  //Компонент FAIL_LOAD...
+  #failLoadComponent = new TripNoEventView({currentFilter : FAIL_LOAD});
+
+  //объект блокировщик
+
   #uiBlocker = new UiBlocker({
     lowerLimit: BlockerTimeLimit.LOWER_LIMIT,
     upperLimit: BlockerTimeLimit.UPPER_LIMIT
@@ -42,11 +48,6 @@ export default class TripPresenter {
 
   #newPointButton = document.querySelector('.trip-main__event-add-btn');
 
-
-  //Рабочий массив точек маршрута
-  //#tripPoints = [];
-  //Исходный немутированный массив точек маршрута
-  //  #sourceTripPoints = [];
 
   //Текущий метод сортировки
   #currentSortType = DEFAULT_SORT_TYPE;
@@ -63,16 +64,137 @@ export default class TripPresenter {
     this.#newPointButton.disabled = true;
 
 
-    this.#pointsModel.addObserver(this.#handleModelEvent);
-    this.#filterModel.addObserver(this.#handleModelEvent);
+    this.#pointsModel.addObserver(this.#modelEventHandler);
+    this.#filterModel.addObserver(this.#modelEventHandler);
 
     this.#newPointButton.addEventListener('click',this.#newEventHandler);
 
 
   }
 
+  get points() {
+    const filterType = this.#filterModel.filter;
+    const points = this.#pointsModel.points;
+    const filteredTasks = filter[filterType](points);
+
+    switch (this.#currentSortType) {
+      case SortType.DAY:
+        return filteredTasks.sort(sortDay);
+      case SortType.TIME:
+        return filteredTasks.sort(sortTime);
+      case SortType.PRICE:
+        return filteredTasks.sort(sortPrice);
+      default:
+        return filteredTasks;
+    }
+  }
+
+
+  init() {
+    //Сортировка
+    this.#sorters = generateSorter(this.#pointsModel.points);
+
+
+    render(this.#loadingComponent, this.#tripContainer,RenderPosition.AFTERBEGIN);
+    render(this.#tripEventListComponent, this.#tripContainer);
+  }
+
+
+  //Перерисовать список сортировки
+  #renderSorters(){
+    this.#sortListView = new SortListView({sorters : this.#sorters,
+      onSortClick : this.#sortClickHandler,currentSortType : this.#currentSortType});
+
+    render(this.#sortListView, this.#tripContainer,RenderPosition.AFTERBEGIN);
+  }
+
+  //Установка флагов для обратной связи
+  setSaving() {
+    this.#newEventComponent.updateElement({
+      isDisabled: true,
+      isSaving: true,
+    });
+  }
+
+  //Тряска при ошибке обращения к серверу
+  setAborting(component,updateAfterShake = true) {
+    const resetFormState = () => {
+      if (updateAfterShake){
+        component.updateElement({
+          isDisabled: false,
+          isSaving: false,
+          isDeleting: false,
+        });
+      }
+    };
+
+    component.shake(resetFormState);
+  }
+
+  //Очищаем список точек, секции фильтрации и сортировки
+  #clearPointsSection(resetSort = false){
+    this.#clearPointPresenters();
+    if (resetSort) {
+      this.#currentSortType = DEFAULT_SORT_TYPE;
+      this.#sortListView.resetSorters();
+    }
+    remove(this.#sortListView);
+    remove(this.#filterListView);
+  }
+
+
+  //Отрисуем к точки маршрутов, если они есть
+  #renderTrip() {
+    const points = this.points;
+
+    this.#renderSorters();
+
+    this.#renderPoints(points);
+  }
+
+  //Заглушка при отсутствии точек
+  #renderNoPoint(){
+    this.#tripNoEventView = new TripNoEventView({currentFilter: this.#filterModel.filter});
+    render(this.#tripNoEventView, this.#tripContainer);
+  }
+
+  //Рисует все точки маршрута
+  #renderPoints(points){
+
+    if (points.length > 0) {
+      points.forEach((point) => {
+        this.#renderPoint(point);
+      });
+    } else
+    if (!this.#newEventComponent){
+      this.#renderNoPoint();
+    }
+
+  }
+
+  //Рисует одну точку маршрута
+  #renderPoint (point) {
+    const pointPresenter = new PointPresenter({tripEventListComponent:this.#tripEventListComponent.element,
+      onPointUpdate: this.#viewActionHandler,
+      onModeChange: this.#modeChangeHandler,
+      pointsModel: this.#pointsModel});
+    pointPresenter.init(point);
+    this.#pointPresenters.set(point.id,pointPresenter);
+  }
+
+  //Очистка всех представлений
+  #clearPointPresenters(){
+    this.#pointPresenters.forEach((presenter) => {
+      presenter.destroy();
+    });
+    this.#pointPresenters.clear();
+    remove(this.#tripNoEventView);
+  }
+
+  //-------------------------------------------------Обработчики---------------------------------------
+
   //Обновление модели
-  #handleViewAction = async (actionType, updateType, update) => {
+  #viewActionHandler = async (actionType, updateType, update) => {
     // Здесь будем вызывать обновление модели.
     // actionType - действие пользователя, нужно чтобы понять, какой метод модели вызвать
     // updateType - тип изменений, нужно чтобы понять, что после нужно обновить
@@ -89,12 +211,21 @@ export default class TripPresenter {
           return false;
         }
         break;
+      case UserAction.CHANGE_FAVORITE:
+        try{
+          await this.#pointsModel.updatePoint(updateType, update);
+        } catch(err){
+          this.setAborting(this.#tripEventListComponent,false);
+          this.#uiBlocker.unblock();
+          return false;
+        }
+        break;
       case UserAction.ADD_POINT:
         this.setSaving();
         try{
           await this.#pointsModel.addPoint(updateType, update);
         } catch(err){
-          this.setAborting();
+          this.setAborting(this.#newEventComponent);
           this.#uiBlocker.unblock();
           return false;
         }
@@ -104,6 +235,7 @@ export default class TripPresenter {
         this.#pointPresenters.get(update.id).setDeleting();
         try{
           await this.#pointsModel.deletePoint(updateType, update);
+
         }catch(err){
           this.#pointPresenters.get(update.id).setAborting();
           this.#uiBlocker.unblock();
@@ -117,7 +249,7 @@ export default class TripPresenter {
 
 
   //Реакция на обновление модели
-  #handleModelEvent = (updateType, data) => {
+  #modelEventHandler = (updateType, data) => {
     // В зависимости от типа изменений решаем, что делать:
     // - обновить часть списка (например, когда поменялось описание)
     // - обновить список (например, когда задача ушла в архив)
@@ -139,37 +271,25 @@ export default class TripPresenter {
 
         break;
       case UpdateType.INIT:
-        this.#newPointButton.disabled = false;
-        remove(this.#loadingComponent);
-        this.#renderTrip();
+        if (data){
+          this.#newPointButton.disabled = false;
+          remove(this.#loadingComponent);
+          this.#renderTrip();
+        } else{
+          remove(this.#loadingComponent);
+          render(this.#failLoadComponent, this.#tripContainer,RenderPosition.AFTERBEGIN);
+        }
+
         break;
     }
   };
-
-
-  init() {
-    //Сортировка
-    this.#sorters = generateSorter(this.#pointsModel.points);
-
-
-    render(this.#loadingComponent, this.#tripContainer,RenderPosition.AFTERBEGIN);
-    render(this.#tripEventListComponent, this.#tripContainer);
-  }
-
-
-  //Перерисовать список сортировки
-  #renderSorters(){
-    this.#sortListView = new SortListView({sorters : this.#sorters,
-      onSortClick : this.#sortClickHandler,currentSortType : this.#currentSortType});
-
-    render(this.#sortListView, this.#tripContainer,RenderPosition.AFTERBEGIN);
-  }
 
 
   //обработчик создания новой точки
   #newEventHandler = (evt) =>{
     this.#newPointButton.disabled = true;
     this.#filterModel.filterType = DEFAULT_FILTER;
+    remove(this.#tripNoEventView);
 
 
     evt.preventDefault();
@@ -180,41 +300,21 @@ export default class TripPresenter {
         onCancelDeleteClick: this.#newEventCancelHandler,
         pointsModel: this.#pointsModel,
         isEditForm : false});
+      document.addEventListener('keydown', this.#escKeyDownHandler);
       render(this.#newEventComponent, this.#tripContainer,RenderPosition.AFTERBEGIN);
 
       this.#currentSortType = DEFAULT_SORT_TYPE;
       this.#sortListView.resetSorters();
       this.#filterModel.setFilter(UpdateType.BIG, DEFAULT_FILTER);
-
     }
   };
 
-  //Установка флагов для обратной связи
-  setSaving() {
-    this.#newEventComponent.updateElement({
-      isDisabled: true,
-      isSaving: true,
-    });
-  }
 
-  //Тряска при ошибке обращения к серверу
-  setAborting() {
-    const resetFormState = () => {
-      this.#newEventComponent.updateElement({
-        isDisabled: false,
-        isSaving: false,
-        isDeleting: false,
-      });
-    };
-
-    this.#newEventComponent.shake(resetFormState);
-  }
-
-  //Добавляем точку
+  //Обработчик добавления точки
   #newEventSubmitHandler = (newpoint)=>{
     this.#newPointButton.disabled = false;
 
-    this.#handleViewAction(
+    this.#viewActionHandler(
       UserAction.ADD_POINT,
       UpdateType.MIDDLE,
       newpoint
@@ -234,9 +334,18 @@ export default class TripPresenter {
     this.#newPointButton.disabled = false;
     remove(this.#newEventComponent);
     this.#newEventComponent = null;
-
+    if(this.points.length === 0){
+      this.#renderNoPoint();
+    }
   };
 
+  #escKeyDownHandler = (evt) =>{
+    if (evt.key === 'Escape') {
+      evt.preventDefault();
+      this.#newEventCancelHandler();
+      document.removeEventListener('keydown', this.#escKeyDownHandler);
+    }
+  };
 
   //Обработчик сортировки
   #sortClickHandler = (sortType) =>{
@@ -250,84 +359,12 @@ export default class TripPresenter {
 
   };
 
-
-  //Очищаем список точек, секции фильтрации и сортировки
-  #clearPointsSection(resetSort = false){
-    this.#clearPointPresenters();
-    if (resetSort) {
-      this.#currentSortType = DEFAULT_SORT_TYPE;
-      this.#sortListView.resetSorters();
-    }
-    remove(this.#sortListView);
-    remove(this.#filterListView);
-    remove(this.#tripNoEventView);
-  }
-
-
-  //Отрисуем к точки маршрутов, если они есть
-  #renderTrip() {
-    const points = this.points;
-
-    this.#renderSorters();
-
-    if (points.length > 0) {
-      this.#renderPoints(points);
-    } else {
-      this.#renderNoPoint();
-    }
-  }
-
-  //Заглушка при отсутствии точек
-  #renderNoPoint(){
-    this.#tripNoEventView = new TripNoEventView({currentFilter: this.#filterModel.filter});
-    render(this.#tripNoEventView, this.#tripContainer);
-  }
-
-  //Рисует все точки маршрута
-  #renderPoints(points){
-    points.forEach((point) => {
-      this.#renderPoint(point);
-    });
-  }
-
-  //Рисует одну точку маршрута
-  #renderPoint (point) {
-    const pointPresenter = new PointPresenter({tripEventListComponent:this.#tripEventListComponent.element,
-      onPointUpdate: this.#handleViewAction,
-      onModeChange: this.#handleModeChange,
-      pointsModel: this.#pointsModel});
-    pointPresenter.init(point);
-    this.#pointPresenters.set(point.id,pointPresenter);
-  }
-
-  #handleModeChange = () => {
+  //Обработчик сброса всех форм редактирования
+  #modeChangeHandler = () => {
     this.#pointPresenters.forEach((presenter) => presenter.resetView());
+    //И сброс создания новой точки
+    this.#newEventCancelHandler();
   };
-
-  //Очистка всех представлений
-  #clearPointPresenters(){
-    this.#pointPresenters.forEach((presenter) => {
-      presenter.destroy();
-    });
-    this.#pointPresenters.clear();
-  }
-
-  get points() {
-    const filterType = this.#filterModel.filter;
-    const points = this.#pointsModel.points;
-    const filteredTasks = filter[filterType](points);
-
-    switch (this.#currentSortType) {
-      case SortType.DAY:
-        return filteredTasks.sort(sortDay);
-      case SortType.TIME:
-        return filteredTasks.sort(sortTime);
-      case SortType.PRICE:
-        return filteredTasks.sort(sortPrice);
-      default:
-        return filteredTasks;
-    }
-  }
 
 
 }
