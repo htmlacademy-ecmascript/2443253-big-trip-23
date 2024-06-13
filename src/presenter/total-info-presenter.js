@@ -26,7 +26,10 @@ export default class totalInfoPresenter {
     let abbreviated = false;
     //Сортировка по дате
     const points = [...this.#pointsModel.points.sort(sortDay)];
+    //Точек нет убираем блок с информацией
     if (points.length === 0) {
+      remove(this.#totalInfoView);
+      this.#totalInfoView = null;
       return;
     }
 
@@ -47,13 +50,19 @@ export default class totalInfoPresenter {
 
     });
     //Если больше двух городов тогда берем первый и последний по дате посещения
-    if (totalTripPoints.length > 3){
-      totalTripPoints = [...totalTripPoints.filter((town,index) =>(index === 0) || (index === 1))];
+    if (totalTripPoints.length > 2){
+      totalTripPoints = [...totalTripPoints.filter((town,index,array) =>(index === 0) || (index === array.length - 1))];
       abbreviated = true;
     }
     //Даты
     if (points.length > 0){
       totalTripDates.push(dayjs(points[0].dateFrom).format('DD MMM'));
+      if (points.length === 1){
+        const hours = dayjs(points[0].dateTo).diff(dayjs(points[0].dateFrom), 'hours');
+        if(hours > 23){
+          totalTripDates.push(dayjs(points[0].dateTo).format('DD MMM'));
+        }
+      }
     }
     if (points.length > 1){
       totalTripDates.push(dayjs(points[points.length - 1].dateTo).format('DD MMM'));

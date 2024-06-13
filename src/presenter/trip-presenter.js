@@ -117,16 +117,18 @@ export default class TripPresenter {
   }
 
   //Тряска при ошибке обращения к серверу
-  setAborting() {
+  setAborting(component,updateAfterShake = true) {
     const resetFormState = () => {
-      this.#newEventComponent.updateElement({
-        isDisabled: false,
-        isSaving: false,
-        isDeleting: false,
-      });
+      if (updateAfterShake){
+        component.updateElement({
+          isDisabled: false,
+          isSaving: false,
+          isDeleting: false,
+        });
+      }
     };
 
-    this.#newEventComponent.shake(resetFormState);
+    component.shake(resetFormState);
   }
 
   //Очищаем список точек, секции фильтрации и сортировки
@@ -138,7 +140,6 @@ export default class TripPresenter {
     }
     remove(this.#sortListView);
     remove(this.#filterListView);
-    remove(this.#tripNoEventView);
   }
 
 
@@ -164,7 +165,8 @@ export default class TripPresenter {
       points.forEach((point) => {
         this.#renderPoint(point);
       });
-    } else{
+    } else
+    if (!this.#newEventComponent){
       this.#renderNoPoint();
     }
 
@@ -186,6 +188,7 @@ export default class TripPresenter {
       presenter.destroy();
     });
     this.#pointPresenters.clear();
+    remove(this.#tripNoEventView);
   }
 
   //-------------------------------------------------Обработчики---------------------------------------
@@ -208,12 +211,21 @@ export default class TripPresenter {
           return false;
         }
         break;
+      case UserAction.CHANGE_FAVORITE:
+        try{
+          await this.#pointsModel.updatePoint(updateType, update);
+        } catch(err){
+          this.setAborting(this.#tripEventListComponent,false);
+          this.#uiBlocker.unblock();
+          return false;
+        }
+        break;
       case UserAction.ADD_POINT:
         this.setSaving();
         try{
           await this.#pointsModel.addPoint(updateType, update);
         } catch(err){
-          this.setAborting();
+          this.setAborting(this.#newEventComponent);
           this.#uiBlocker.unblock();
           return false;
         }
@@ -277,6 +289,7 @@ export default class TripPresenter {
   #newEventHandler = (evt) =>{
     this.#newPointButton.disabled = true;
     this.#filterModel.filterType = DEFAULT_FILTER;
+    remove(this.#tripNoEventView);
 
 
     evt.preventDefault();
@@ -287,12 +300,12 @@ export default class TripPresenter {
         onCancelDeleteClick: this.#newEventCancelHandler,
         pointsModel: this.#pointsModel,
         isEditForm : false});
+      document.addEventListener('keydown', this.#escKeyDownHandler);
       render(this.#newEventComponent, this.#tripContainer,RenderPosition.AFTERBEGIN);
 
       this.#currentSortType = DEFAULT_SORT_TYPE;
       this.#sortListView.resetSorters();
       this.#filterModel.setFilter(UpdateType.BIG, DEFAULT_FILTER);
-
     }
   };
 
@@ -321,9 +334,18 @@ export default class TripPresenter {
     this.#newPointButton.disabled = false;
     remove(this.#newEventComponent);
     this.#newEventComponent = null;
-
+    if(this.points.length === 0){
+      this.#renderNoPoint();
+    }
   };
 
+  #escKeyDownHandler = (evt) =>{
+    if (evt.key === 'Escape') {
+      evt.preventDefault();
+      this.#newEventCancelHandler();
+      document.removeEventListener('keydown', this.#escKeyDownHandler);
+    }
+  };
 
   //Обработчик сортировки
   #sortClickHandler = (sortType) =>{
@@ -340,6 +362,8 @@ export default class TripPresenter {
   //Обработчик сброса всех форм редактирования
   #modeChangeHandler = () => {
     this.#pointPresenters.forEach((presenter) => presenter.resetView());
+    //И сброс создания новой точки
+    this.#newEventCancelHandler();
   };
 
 

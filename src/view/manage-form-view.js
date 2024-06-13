@@ -1,6 +1,6 @@
 
 import AbstractStateFulView from '../framework/view/abstract-stateful-view.js';
-import {humanizeDate,capitalize} from '../utils/point.js';
+import {capitalize} from '../utils/point.js';
 import {EVENT_TYPES,MAX_DAYS_TRIP_POINT} from '../const.js';
 import {BLANK_POINT} from '../model/points-model.js';
 import dayjs from 'dayjs';
@@ -12,6 +12,8 @@ import 'flatpickr/dist/flatpickr.min.css';
 export default class FormCreateEditView extends AbstractStateFulView{
 
   _isEditForm = false;
+  #startDateChanged = false;
+  #endDateChanged = false;
   #point = null;
   #datepicker = null;
   #handleFormSubmit = null;
@@ -59,13 +61,14 @@ export default class FormCreateEditView extends AbstractStateFulView{
       return `
     <section class="event__section  event__section--destination">
       <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-      <p class="event__destination-description">${name}</p>
+      ${name.length > 0 ? `<p class="event__destination-description">${name}</p>` : ''}
+      ${pictures.length > 0 ? `
       <div class="event__photos-container">
         <div class="event__photos-tape">
         ${pictures.map((picture)=>`<img class="event__photo" src="${picture.src}" alt=${picture.description}>`)}
         </div>
       </div>
-    </section>`;
+    </section>` : ''}`;
     }
     return '';
   };
@@ -92,7 +95,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
 
 
   _createEventForm(isEditFrom){
-    const {basePrice,dateFrom,dateTo,destination,offers,availableOffers,type,id,
+    const {basePrice,destination,offers,availableOffers,type,id,
       isDeleting,isSaving,isDisabled
     } = this._state;
 
@@ -107,8 +110,9 @@ export default class FormCreateEditView extends AbstractStateFulView{
     }
 
     return `
+    <li class="trip-events__item">
     <form class="event event--edit" action="#" method="post">
-  <header class="event__header">
+    <header class="event__header">
     <div class="event__type-wrapper">
       <label class="event__type  event__type-btn" for="event-type-toggle-${id}">
         <span class="visually-hidden">Choose event type</span>
@@ -138,10 +142,10 @@ export default class FormCreateEditView extends AbstractStateFulView{
 
         <div class="event__field-group  event__field-group--time">
           <label class="visually-hidden" for="event-start-time-1">From</label>
-          <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${humanizeDate(dateFrom)}">
+          <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="" required>
           &mdash;
           <label class="visually-hidden" for="event-end-time-1">To</label>
-          <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${humanizeDate(dateTo)}">
+          <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="" required>
         </div>
 
         <div class="event__field-group  event__field-group--price">
@@ -161,17 +165,19 @@ export default class FormCreateEditView extends AbstractStateFulView{
   </header>
   <section class="event__details">
 
-    <section class="event__section  event__section--offers">
+  ${(availableOffers.length > 0) ?
+    `<section class="event__section  event__section--offers">
 
-      ${(availableOffers.length > 0) ? '<h3 class="event__section-title  event__section-title--offers">Offers</h3>' : ''}
+      <h3 class="event__section-title  event__section-title--offers">Offers</h3>` : ''}
 
       <div class="event__available-offers">
     ${availableOffers.map((element,index) => this._createEventOfferItem(element,offers.includes(element),id,index)).join('')}
       </div>
-    </section>
+      ${(availableOffers.length > 0) ? '</section>' : ''}
     ${destination.town ? this._createDestinationImage(destination) : ''}
 </section>
-  </form>`;
+  </form>
+  </li>`;
   }
 
 
@@ -209,20 +215,27 @@ export default class FormCreateEditView extends AbstractStateFulView{
 
     if(this._isEditForm){
       this.element.querySelector('.event__rollup-btn').addEventListener('click',this.#hideClickHandler);
-
-
+    } else {
+      if (!this.#startDateChanged){
+        this.element.querySelector('#event-start-time-1').value = '';
+      }
+      if (!this.#endDateChanged){
+        this.element.querySelector('#event-end-time-1').value = '';
+      }
     }
+
+
     this.element.querySelector('.event__available-offers')
       .addEventListener('click', this.#offerInputHandler);
   }
 
   //--------------------------------------------Обработчики------------------------------------
+
   //Меняем доп. услугу
   #offerInputHandler = (evt) =>{
     const newOffers = [...this._state.offers];
     evt.preventDefault();
     let checkedElement;
-
 
     //Выберем нужный элемент в зависимости от того куда кликнул пользователь
     switch(evt.target.className){
@@ -232,7 +245,8 @@ export default class FormCreateEditView extends AbstractStateFulView{
       case 'event__offer-checkbox': checkedElement = evt.target; break;
       default: return;
     }
-    this._state.availableOffers.map((offer,index) =>{
+
+    this._state.availableOffers.forEach((offer,index) =>{
       const id = `event-offer-${index}-${this._state.id}`;
       if (checkedElement.id === id){
         if(!checkedElement.checked){
@@ -244,11 +258,11 @@ export default class FormCreateEditView extends AbstractStateFulView{
       }
 
     });
-    for (let i = 0; i < newOffers.length; i++){
-      if(!newOffers[i]) {
-        newOffers[i] = 0;
+    newOffers.map((element) => {
+      if(!element){
+        element = 0;
       }
-    }
+    });
     this.updateElement({
       offers: [...newOffers],
     });
@@ -290,6 +304,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
 
   //Меняем начальную дату
   #dateFromChangeHandler = ([userDate]) => {
+    this.#startDateChanged = true;
     this.updateElement({
       dateFrom: userDate,
     });
@@ -297,6 +312,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
 
   //Меняем конечную дату
   #dateToChangeHandler = ([userDate]) => {
+    this.#endDateChanged = true;
     this.updateElement({
       dateTo: userDate,
     });

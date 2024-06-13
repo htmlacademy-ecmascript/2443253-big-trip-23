@@ -110,6 +110,7 @@ export default class PointPresenter {
     this.#mode = Mode.DEFAULT;
   }
 
+
   #replacePointToForm(){
     replace(this.#pointEditComponent,this.#pointViewComponent);
     document.addEventListener('keydown', this.#escKeyDownHandler);
@@ -117,13 +118,16 @@ export default class PointPresenter {
     this.#mode = Mode.EDITING;
   }
 
+  //-------------------------------------------------------Обработчики-----------------------------------------------------
+  //Нажатие звездочки
   #favoriteClickHandler = () =>{
     this.#handlePointUpdate(
-      UserAction.UPDATE_POINT,
+      UserAction.CHANGE_FAVORITE,
       UpdateType.MIDDLE,
       {...this.#point, isFavorite: !this.#point.isFavorite});
   };
 
+  //Клик на редактирование
   #editClickHandler = () => {
     this.#replacePointToForm(this.#pointViewComponent,this.#pointEditComponent);
   };
@@ -133,9 +137,10 @@ export default class PointPresenter {
       UserAction.UPDATE_POINT,
       UpdateType.MIDDLE,
       point);
-    this.#replaceFormToPoint();
+
   };
 
+  //Клик на удаление
   #resetEditFormHandler = (point)=>{
     this.#handlePointUpdate(
       UserAction.DELETE_POINT,
@@ -144,6 +149,7 @@ export default class PointPresenter {
     );
   };
 
+  //Клик на закрытие редактирования
   #rollupFormHandler = () => {
     this.#pointEditComponent.reset(this.#point);
     this.#replaceFormToPoint();
@@ -154,6 +160,7 @@ export default class PointPresenter {
       evt.preventDefault();
       this.#pointEditComponent.reset(this.#point);
       this.#replaceFormToPoint();
+
     }
   };
 
