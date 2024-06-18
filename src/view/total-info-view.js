@@ -23,7 +23,7 @@ export default class TotalInfoView extends AbstractView{
     if(abbreviatedPath){
       return `${totalTripPoints[0]} &mdash;&nbsp ... &mdash;&nbsp ${totalTripPoints[1]}`;
     }else{
-      return `${totalTripPoints.map((town,index,array) =>index < array.length - 1 ? `${town} &mdash;&nbsp ` : town).join('')}`;
+      return `${totalTripPoints.map((town,index,towns) =>index < towns.length - 1 ? `${town} &mdash;&nbsp ` : town).join('')}`;
     }
   }
 

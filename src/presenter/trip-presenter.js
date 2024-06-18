@@ -1,7 +1,7 @@
 import SortListView from '../view/sort-list-view.js';
 
-import FormCreateEditView from '../view/manage-form-view.js';
-import TripNoEventView from '../view/no-point-view.js';
+import ManageFormView from '../view/manage-form-view.js';
+import NoPointView from '../view/no-point-view.js';
 import TripEventListView from '../view/trip-event-list-view.js';
 import PointPresenter from './point-presenter.js';
 import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
@@ -12,8 +12,8 @@ import {generateSorter} from '../utils/sort.js';
 import {filter} from '../utils/filter.js';
 
 
-import {sortDay, sortPrice, sortTime} from '../utils/point.js';
-import {SortType,DEFAULT_SORT_TYPE,UserAction,UpdateType, DEFAULT_FILTER,LOADING,FAIL_LOAD} from '../const.js';
+import {sortByDay, sortByPrice, sortByTime} from '../utils/point.js';
+import {SortType,DEFAULT_SORT_TYPE,UserAction,UpdateType, DEFAULT_FILTER,LOADING,FAIL_LOAD,ESCAPE_KEY} from '../const.js';
 
 const BlockerTimeLimit = {
   LOWER_LIMIT: 350,
@@ -28,16 +28,16 @@ export default class TripPresenter {
 
   #tripContainer = null;
   #filterListView = null;
-  #tripNoEventView = null;
+  #noPointView = null;
 
   #sortListView = null;
   #pointsModel = null;
   #filterModel = null;
   #newEventComponent = null;
   //Компонент LOADING...
-  #loadingComponent = new TripNoEventView({currentFilter : LOADING});
+  #loadingComponent = new NoPointView({currentFilter : LOADING});
   //Компонент FAIL_LOAD...
-  #failLoadComponent = new TripNoEventView({currentFilter : FAIL_LOAD});
+  #failLoadComponent = new NoPointView({currentFilter : FAIL_LOAD});
 
   //объект блокировщик
 
@@ -64,10 +64,10 @@ export default class TripPresenter {
     this.#newPointButton.disabled = true;
 
 
-    this.#pointsModel.addObserver(this.#modelEventHandler);
-    this.#filterModel.addObserver(this.#modelEventHandler);
+    this.#pointsModel.addObserver(this.#modelChangeHandler);
+    this.#filterModel.addObserver(this.#modelChangeHandler);
 
-    this.#newPointButton.addEventListener('click',this.#newEventHandler);
+    this.#newPointButton.addEventListener('click',this.#newPointCreateHandler);
 
 
   }
@@ -79,11 +79,11 @@ export default class TripPresenter {
 
     switch (this.#currentSortType) {
       case SortType.DAY:
-        return filteredTasks.sort(sortDay);
+        return filteredTasks.sort(sortByDay);
       case SortType.TIME:
-        return filteredTasks.sort(sortTime);
+        return filteredTasks.sort(sortByTime);
       case SortType.PRICE:
-        return filteredTasks.sort(sortPrice);
+        return filteredTasks.sort(sortByPrice);
       default:
         return filteredTasks;
     }
@@ -103,7 +103,7 @@ export default class TripPresenter {
   //Перерисовать список сортировки
   #renderSorters(){
     this.#sortListView = new SortListView({sorters : this.#sorters,
-      onSortClick : this.#sortClickHandler,currentSortType : this.#currentSortType});
+      onSortClick : this.#sortButtonClickHandler,currentSortType : this.#currentSortType});
 
     render(this.#sortListView, this.#tripContainer,RenderPosition.AFTERBEGIN);
   }
@@ -154,8 +154,8 @@ export default class TripPresenter {
 
   //Заглушка при отсутствии точек
   #renderNoPoint(){
-    this.#tripNoEventView = new TripNoEventView({currentFilter: this.#filterModel.filter});
-    render(this.#tripNoEventView, this.#tripContainer);
+    this.#noPointView = new NoPointView({currentFilter: this.#filterModel.filter});
+    render(this.#noPointView, this.#tripContainer);
   }
 
   //Рисует все точки маршрута
@@ -188,12 +188,12 @@ export default class TripPresenter {
       presenter.destroy();
     });
     this.#pointPresenters.clear();
-    remove(this.#tripNoEventView);
+    remove(this.#noPointView);
   }
 
   //-------------------------------------------------Обработчики---------------------------------------
 
-  //Обновление модели
+  //Обновление модели по действию пользователя
   #viewActionHandler = async (actionType, updateType, update) => {
     // Здесь будем вызывать обновление модели.
     // actionType - действие пользователя, нужно чтобы понять, какой метод модели вызвать
@@ -249,7 +249,7 @@ export default class TripPresenter {
 
 
   //Реакция на обновление модели
-  #modelEventHandler = (updateType, data) => {
+  #modelChangeHandler = (updateType, data) => {
     // В зависимости от типа изменений решаем, что делать:
     // - обновить часть списка (например, когда поменялось описание)
     // - обновить список (например, когда задача ушла в архив)
@@ -286,18 +286,18 @@ export default class TripPresenter {
 
 
   //обработчик создания новой точки
-  #newEventHandler = (evt) =>{
+  #newPointCreateHandler = (evt) =>{
     this.#newPointButton.disabled = true;
     this.#filterModel.filterType = DEFAULT_FILTER;
-    remove(this.#tripNoEventView);
+    remove(this.#noPointView);
 
 
     evt.preventDefault();
     if (!this.#newEventComponent){
-      this.#newEventComponent = new FormCreateEditView({
+      this.#newEventComponent = new ManageFormView({
         point: {...BLANK_POINT,availableOffers: this.#pointsModel.adaptToClientAvailableOffers(BLANK_POINT.type)},
-        onSubmitClick: this.#newEventSubmitHandler,
-        onCancelDeleteClick: this.#newEventCancelHandler,
+        onSubmitClick: this.#newPointFormSubmitHandler,
+        onDeleteClick: this.#newPointFormCancelHandler,
         pointsModel: this.#pointsModel,
         isEditForm : false});
       document.addEventListener('keydown', this.#escKeyDownHandler);
@@ -311,7 +311,7 @@ export default class TripPresenter {
 
 
   //Обработчик добавления точки
-  #newEventSubmitHandler = (newpoint)=>{
+  #newPointFormSubmitHandler = (newpoint)=>{
     this.#newPointButton.disabled = false;
 
     this.#viewActionHandler(
@@ -329,7 +329,7 @@ export default class TripPresenter {
   };
 
   //Отмена добавления точки
-  #newEventCancelHandler = ()=>{
+  #newPointFormCancelHandler = ()=>{
 
     this.#newPointButton.disabled = false;
     remove(this.#newEventComponent);
@@ -340,15 +340,15 @@ export default class TripPresenter {
   };
 
   #escKeyDownHandler = (evt) =>{
-    if (evt.key === 'Escape') {
+    if (evt.key === ESCAPE_KEY) {
       evt.preventDefault();
-      this.#newEventCancelHandler();
+      this.#newPointFormCancelHandler();
       document.removeEventListener('keydown', this.#escKeyDownHandler);
     }
   };
 
   //Обработчик сортировки
-  #sortClickHandler = (sortType) =>{
+  #sortButtonClickHandler = (sortType) =>{
     if (this.#currentSortType === sortType) {
       return;
     }
@@ -363,7 +363,7 @@ export default class TripPresenter {
   #modeChangeHandler = () => {
     this.#pointPresenters.forEach((presenter) => presenter.resetView());
     //И сброс создания новой точки
-    this.#newEventCancelHandler();
+    this.#newPointFormCancelHandler();
   };
 
 

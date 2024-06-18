@@ -1,5 +1,5 @@
 import AbstractView from '../framework/view/abstract-view.js';
-export default class TripNoEventView extends AbstractView{
+export default class NoPointView extends AbstractView{
   #currentFilter = null;
   // Значение отображаемого текста зависит от выбранного фильтра:
   //   * Everthing – 'Click New Event to create your first point'

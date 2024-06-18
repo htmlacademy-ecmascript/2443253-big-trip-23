@@ -1,14 +1,13 @@
 
-import FormCreateEditView from '../view/manage-form-view.js';
+import ManageFormView from '../view/manage-form-view.js';
 import TripEventView from '../view/trip-event-view.js';
 import {replace,render,remove} from '../framework/render.js';
-import {UserAction, UpdateType} from '../const.js';
+import {UserAction, UpdateType,ESCAPE_KEY} from '../const.js';
 
 const Mode = {
   DEFAULT:'DEFAULT',
   EDITING:'EDITING',
 };
-
 
 export default class PointPresenter {
   #tripEventListComponent = null;
@@ -36,15 +35,15 @@ export default class PointPresenter {
 
     this.#pointViewComponent = new TripEventView({
       point : this.#point,
-      onEditClick: this.#editClickHandler,
-      onFavoriteClick: this.#favoriteClickHandler
+      onEditClick: this.#editButtonClickHandler,
+      onFavoriteClick: this.#favoriteButtonClickHandler
     });
 
-    this.#pointEditComponent = new FormCreateEditView({
+    this.#pointEditComponent = new ManageFormView({
       point : this.#point,
-      onSubmitClick: this.#submitFormHandler,
-      onCancelDeleteClick: this.#resetEditFormHandler,
-      onRollupClick: this.#rollupFormHandler,
+      onSubmitClick: this.#formSubmitHandler,
+      onDeleteClick: this.#deleteButtonClickHandler,
+      onRollupClick: this.#rollupButtonClickHandler,
       pointsModel: this.#pointsModel,
       isEditForm : true
     });
@@ -120,7 +119,7 @@ export default class PointPresenter {
 
   //-------------------------------------------------------Обработчики-----------------------------------------------------
   //Нажатие звездочки
-  #favoriteClickHandler = () =>{
+  #favoriteButtonClickHandler = () =>{
     this.#handlePointUpdate(
       UserAction.CHANGE_FAVORITE,
       UpdateType.MIDDLE,
@@ -128,11 +127,11 @@ export default class PointPresenter {
   };
 
   //Клик на редактирование
-  #editClickHandler = () => {
+  #editButtonClickHandler = () => {
     this.#replacePointToForm(this.#pointViewComponent,this.#pointEditComponent);
   };
 
-  #submitFormHandler = (point) => {
+  #formSubmitHandler = (point) => {
     this.#handlePointUpdate(
       UserAction.UPDATE_POINT,
       UpdateType.MIDDLE,
@@ -141,7 +140,7 @@ export default class PointPresenter {
   };
 
   //Клик на удаление
-  #resetEditFormHandler = (point)=>{
+  #deleteButtonClickHandler = (point)=>{
     this.#handlePointUpdate(
       UserAction.DELETE_POINT,
       UpdateType.MIDDLE,
@@ -150,13 +149,13 @@ export default class PointPresenter {
   };
 
   //Клик на закрытие редактирования
-  #rollupFormHandler = () => {
+  #rollupButtonClickHandler = () => {
     this.#pointEditComponent.reset(this.#point);
     this.#replaceFormToPoint();
   };
 
   #escKeyDownHandler = (evt) => {
-    if (evt.key === 'Escape') {
+    if (evt.key === ESCAPE_KEY) {
       evt.preventDefault();
       this.#pointEditComponent.reset(this.#point);
       this.#replaceFormToPoint();

@@ -9,7 +9,7 @@ import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 
 
-export default class FormCreateEditView extends AbstractStateFulView{
+export default class ManageFormView extends AbstractStateFulView{
 
   _isEditForm = false;
   #startDateChanged = false;
@@ -23,15 +23,15 @@ export default class FormCreateEditView extends AbstractStateFulView{
   #handleformRollup = null;
 
 
-  constructor ({point,onSubmitClick,onCancelDeleteClick,isEditForm,pointsModel,onRollupClick}){
+  constructor ({point,onSubmitClick,onDeleteClick,isEditForm,pointsModel,onRollupClick}){
     super();
     this.#point = point;
     this._isEditForm = isEditForm;
     this.#pointsModel = pointsModel;
     this.#handleFormSubmit = onSubmitClick;
-    this.#handleFormCancelDelete = onCancelDeleteClick;
+    this.#handleFormCancelDelete = onDeleteClick;
     this.#handleformRollup = onRollupClick;
-    this._setState(FormCreateEditView.parsePointToState(this.#point));
+    this._setState(ManageFormView.parsePointToState(this.#point));
     this._restoreHandlers();
   }
 
@@ -51,7 +51,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
 
   reset(point) {
     this.updateElement(
-      FormCreateEditView.parsePointToState(point),
+      ManageFormView.parsePointToState(point),
     );
   }
 
@@ -110,7 +110,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
     }
 
     return `
-    <li class="trip-events__item">
+    ${isEditFrom ? '<li class="trip-events__item">' : ''}
     <form class="event event--edit" action="#" method="post">
     <header class="event__header">
     <div class="event__type-wrapper">
@@ -136,16 +136,16 @@ export default class FormCreateEditView extends AbstractStateFulView{
           </label>
           <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination.town}" list="destination-list-${id}" placeholder = "Выберите пункт назначения" required>
           <datalist id="destination-list-${id}">
-            ${this.#pointsModel.destinations.map((dest) =>`<option value="${dest.name}"></option>`)}
+            ${this.#pointsModel.destinations.map((item) =>`<option value="${item.name}"></option>`)}
           </datalist>
         </div>
 
         <div class="event__field-group  event__field-group--time">
           <label class="visually-hidden" for="event-start-time-1">From</label>
-          <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="" required>
+          <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="">
           &mdash;
           <label class="visually-hidden" for="event-end-time-1">To</label>
-          <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="" required>
+          <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="">
         </div>
 
         <div class="event__field-group  event__field-group--price">
@@ -177,11 +177,11 @@ export default class FormCreateEditView extends AbstractStateFulView{
     ${destination.town ? this._createDestinationImage(destination) : ''}
 </section>
   </form>
-  </li>`;
+  ${isEditFrom ? '</li>' : ''}`;
   }
 
 
-  _setDatePicker(date,minDate,maxDate,elementID,dateElementHandler) {
+  _setDatePicker(date,minDate,maxDate,elementID,dateChangeHandler) {
 
 
     this.#datepicker = flatpickr(
@@ -194,7 +194,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
         defaultDate: date,
         // eslint-disable-next-line camelcase
         time_24hr: true,
-        onChange: dateElementHandler, // На событие flatpickr передаём наш колбэк
+        onChange: dateChangeHandler, // На событие flatpickr передаём наш колбэк
       },
     );
   }
@@ -202,19 +202,19 @@ export default class FormCreateEditView extends AbstractStateFulView{
   _restoreHandlers(){
 
     this.#destinationElement = this.element.querySelector('.event__input--destination');
-    this.#destinationElement.addEventListener('change', this.#destinationInputHandler);
+    this.#destinationElement.addEventListener('change', this.#destinationInputChangeHandler);
     this.element.addEventListener('submit',this.#formSubmitHandler);
-    this.element.querySelector('.event__type-list').addEventListener('click',this.#eventTypeHandler);
+    this.element.querySelector('.event__type-list').addEventListener('click',this.#typeInputChangeHandler);
 
     this.element.querySelector('.event__input--price')
-      .addEventListener('input', this.#priceInputHandler);
-    this._setDatePicker(this._state.dateFrom,'0',this._state.dateTo,'#event-start-time-1',this.#dateFromChangeHandler);
-    this._setDatePicker(this._state.dateTo,this._state.dateFrom,this._state.dateFrom.fp_incr(MAX_DAYS_TRIP_POINT),'#event-end-time-1',this.#dateToChangeHandler);
+      .addEventListener('input', this.#priceInputChangeHandler);
+    this._setDatePicker(this._state.dateFrom,'0',this._state.dateTo,'#event-start-time-1',this.#dateFromInputChangeHandler);
+    this._setDatePicker(this._state.dateTo,this._state.dateFrom,this._state.dateFrom.fp_incr(MAX_DAYS_TRIP_POINT),'#event-end-time-1',this.#dateToInputChangeHandler);
 
-    this.element.addEventListener('reset',this.#formCancelDeleteHandler);
+    this.element.addEventListener('reset',this.#cancelButtonClickHandler);
 
     if(this._isEditForm){
-      this.element.querySelector('.event__rollup-btn').addEventListener('click',this.#hideClickHandler);
+      this.element.querySelector('.event__rollup-btn').addEventListener('click',this.#rollupButtonClickHandler);
     } else {
       if (!this.#startDateChanged){
         this.element.querySelector('#event-start-time-1').value = '';
@@ -226,13 +226,13 @@ export default class FormCreateEditView extends AbstractStateFulView{
 
 
     this.element.querySelector('.event__available-offers')
-      .addEventListener('click', this.#offerInputHandler);
+      .addEventListener('click', this.#offerButtonClickHandler);
   }
 
   //--------------------------------------------Обработчики------------------------------------
 
   //Меняем доп. услугу
-  #offerInputHandler = (evt) =>{
+  #offerButtonClickHandler = (evt) =>{
     const newOffers = [...this._state.offers];
     evt.preventDefault();
     let checkedElement;
@@ -270,7 +270,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
   };
 
   //Меняем тип
-  #eventTypeHandler = (evt) =>{
+  #typeInputChangeHandler = (evt) =>{
     let newType = null,
       availableOffers = [];
     evt.preventDefault();
@@ -290,7 +290,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
   };
 
   //Меняем пункт назначения
-  #destinationInputHandler = (evt)=>{
+  #destinationInputChangeHandler = (evt)=>{
     evt.preventDefault();
     const destinations = [...this.#pointsModel.destinations];
     let newDest = destinations.find((dest) => dest.name === evt.target.value);
@@ -303,7 +303,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
   };
 
   //Меняем начальную дату
-  #dateFromChangeHandler = ([userDate]) => {
+  #dateFromInputChangeHandler = ([userDate]) => {
     this.#startDateChanged = true;
     this.updateElement({
       dateFrom: userDate,
@@ -311,7 +311,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
   };
 
   //Меняем конечную дату
-  #dateToChangeHandler = ([userDate]) => {
+  #dateToInputChangeHandler = ([userDate]) => {
     this.#endDateChanged = true;
     this.updateElement({
       dateTo: userDate,
@@ -319,7 +319,7 @@ export default class FormCreateEditView extends AbstractStateFulView{
   };
 
   //Меняем цену
-  #priceInputHandler = (evt) => {
+  #priceInputChangeHandler = (evt) => {
     evt.preventDefault();
     this._setState({
       basePrice: evt.target.value,
@@ -333,20 +333,20 @@ export default class FormCreateEditView extends AbstractStateFulView{
     });
 
 
-    this.#handleFormSubmit(FormCreateEditView.parseStateToPoint(this._state));
+    this.#handleFormSubmit(ManageFormView.parseStateToPoint(this._state));
   };
 
   //Клик на rollup
-  #hideClickHandler = (evt) =>{
+  #rollupButtonClickHandler = (evt) =>{
     evt.preventDefault();
     this.#handleformRollup();
   };
 
 
   //Отмена добавления точки в форме создания или удаление в форме редактирования
-  #formCancelDeleteHandler = (evt) =>{
+  #cancelButtonClickHandler = (evt) =>{
     evt.preventDefault();
-    this.#handleFormCancelDelete(FormCreateEditView.parseStateToPoint(this._state));
+    this.#handleFormCancelDelete(ManageFormView.parseStateToPoint(this._state));
   };
 
   //--------------------------------Статические методы---------------------------
