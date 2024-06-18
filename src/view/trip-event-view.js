@@ -1,4 +1,5 @@
-import {humanizeDate,capitalize,DATE_FORMAT_WITHOUT_TIME,DATE_FORMAT_ONLY_TIME,humanizeDiffDates} from '../utils/point.js';
+import {humanizeDate,capitalize,humanizeDiffDates} from '../utils/point.js';
+import {DATE_FORMAT_WITHOUT_TIME_REVERSE,DATE_FORMAT_ONLY_TIME} from '../const.js';
 import AbstractView from '../framework/view/abstract-view.js';
 
 
@@ -17,21 +18,21 @@ export default class TripEventView extends AbstractView{
     this.#handleEventClick = onEditClick;
     this.#handleFavoriteClick = onFavoriteClick;
     this.element.querySelector('.event__rollup-btn')
-      .addEventListener('click', this.#editClickHandler);
+      .addEventListener('click', this.#editButtonClickHandler);
 
     this.element.querySelector('.event__favorite-btn')
-      .addEventListener('click', this.#favoriteClickHandler);
+      .addEventListener('click', this.#favoriteButtonClickHandler);
   }
 
   get template() {
     const {basePrice,dateFrom,dateTo,time,destination,isFavorite,offers : pointoffers,availableOffers,type} = this.#point;
-    const offersForView = availableOffers.filter((elem) =>
-      pointoffers.includes(elem));
+    const offersForView = availableOffers.filter((element) =>
+      pointoffers.includes(element));
 
 
     return `<li class="trip-events__item">
     <div class="event">
-      <time class="event__date" datetime=${dateFrom}>${humanizeDate(dateFrom,DATE_FORMAT_WITHOUT_TIME)}</time>
+      <time class="event__date" datetime=${dateFrom}>${humanizeDate(dateFrom,DATE_FORMAT_WITHOUT_TIME_REVERSE)}</time>
       <div class="event__type">
         <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
       </div>
@@ -50,10 +51,10 @@ export default class TripEventView extends AbstractView{
       <h4 class="visually-hidden">Offers:</h4>
       <ul class="event__selected-offers">
         <li class="event__offer">
-          <span class="event__offer-title">${offersForView.map((el) => el.title).join(', ')}
+          <span class="event__offer-title">${offersForView.map((element) => element.title).join(', ')}
             </span>
           ${offersForView.length > 0 ? '&plus;&euro;&nbsp' : ''}
-          <span class="event__offer-price">${offersForView.map((el) => el.price).join(', ')}</span>
+          <span class="event__offer-price">${offersForView.map((element) => element.price).join(', ')}</span>
         </li>
       </ul>
       <button class="event__favorite-btn ${this.#isClassFavorite(isFavorite)}" type="button">
@@ -69,12 +70,12 @@ export default class TripEventView extends AbstractView{
   </li>`;
   }
 
-  #favoriteClickHandler = (evt) =>{
+  #favoriteButtonClickHandler = (evt) =>{
     evt.preventDefault();
     this.#handleFavoriteClick();
   };
 
-  #editClickHandler = (evt)=> {
+  #editButtonClickHandler = (evt)=> {
     evt.preventDefault();
     this.#handleEventClick();
   };

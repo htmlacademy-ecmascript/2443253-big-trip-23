@@ -1,6 +1,6 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import {capitalize} from '..//utils/point.js';
-import { DEFAULT_SORT_TYPE, SortType,CHECKED } from '../const.js';
+import { DEFAULT_SORT_TYPE, SortType,CHECKED,LABEL_TAG } from '../const.js';
 
 //Текущее состояние элементов сортировки
 const sortStates = {
@@ -23,7 +23,7 @@ export default class SortListView extends AbstractView{
     this.#handleSortClick = onSortClick;
     this.#sorters = sorters;
     this.#prevSortType = currentSortType;
-    this.element.addEventListener('click',this.#SortListHandler);
+    this.element.addEventListener('click',this.#sortButtonClickHandler);
 
   }
 
@@ -51,9 +51,10 @@ export default class SortListView extends AbstractView{
   </div>`;
   }
 
-  #SortListHandler = (evt) => {
+  //Клик на сортировку
+  #sortButtonClickHandler = (evt) => {
     const sortType = evt.target.dataset.sortType;
-    if (evt.target.tagName !== 'LABEL') {
+    if (evt.target.tagName !== LABEL_TAG) {
       return;
     }
     if (this.#prevSortType !== sortType && ((sortType === SortType.PRICE) || (sortType === SortType.TIME) || (sortType === SortType.DAY))){

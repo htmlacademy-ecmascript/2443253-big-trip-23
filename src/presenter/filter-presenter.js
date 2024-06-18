@@ -18,8 +18,8 @@ export default class FilterPresenter {
     this.#filterModel = filterModel;
     this.#pointsModel = pointsModel;
 
-    this.#filterModel.addObserver(this.#handleModelEvent);
-    this.#pointsModel.addObserver(this.#handleModelEvent);
+    this.#filterModel.addObserver(this.#modelChangeHandler);
+    this.#pointsModel.addObserver(this.#modelChangeHandler);
   }
 
   get filters() {
@@ -61,8 +61,8 @@ export default class FilterPresenter {
     this.#filterModel.setFilter(UpdateType.BIG, filterType);
   };
 
-  //Обработчик события подписки на изменение модели
-  #handleModelEvent = () => {
+  //Обработчик события при подписке на изменение модели
+  #modelChangeHandler = () => {
     this.init();
   };
 }

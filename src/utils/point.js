@@ -2,15 +2,18 @@
 import dayjs from 'dayjs';
 
 const DATE_FORMAT = 'DD/MM/YY HH:mm';
-const DATE_FORMAT_ONLY_TIME = 'HH:mm';
-const DATE_FORMAT_WITHOUT_TIME = 'MMM DD';
+
+const MINUTES_IN_HOUR = 60;
+const HOURS_IN_DAY = 24;
+const DECIMAL = 10;
+const MILLISECONDS_IN_MINUTE = 60000;
 
 
 function addMinutes(date, minutes) {
-  return new Date(date.getTime() + minutes * 60000);
+  return new Date(date.getTime() + minutes * MILLISECONDS_IN_MINUTE);
 }
 //Вернуть строку с первым символом в верхнем регистре
-const capitalize = (s) => s && s[0].toUpperCase() + s.slice(1);
+const capitalize = (line) => line && line[0].toUpperCase() + line.slice(1);
 
 
 function humanizeDate(dueDate,dateFormat = DATE_FORMAT) {
@@ -19,19 +22,19 @@ function humanizeDate(dueDate,dateFormat = DATE_FORMAT) {
 
 //Перевод минутной разницы в разницу формата: дни, часы, минуты
 function humanizeDiffDates (diffMinutes){
-  const days = Math.trunc(diffMinutes / 60 / 24),
-    hours = Math.trunc((diffMinutes - days * 24 * 60) / 60),
-    minutes = (diffMinutes - days * 24 * 60 - hours * 60);
+  const days = Math.trunc(diffMinutes / MINUTES_IN_HOUR / HOURS_IN_DAY),
+    hours = Math.trunc((diffMinutes - days * HOURS_IN_DAY * MINUTES_IN_HOUR) / MINUTES_IN_HOUR),
+    minutes = (diffMinutes - days * HOURS_IN_DAY * MINUTES_IN_HOUR - hours * MINUTES_IN_HOUR);
 
 
-  if (diffMinutes < 60){
+  if (diffMinutes < MINUTES_IN_HOUR){
     return `${minutes}M`;
-  } else if (diffMinutes > 60 && diffMinutes < 1440){
-    return `${hours < 10 ? `0${ hours}` : hours}H ${minutes < 10 ? `0${ minutes}` : minutes}M`;
-  } else if (diffMinutes > 1440){
+  } else if (diffMinutes > MINUTES_IN_HOUR && diffMinutes < HOURS_IN_DAY * MINUTES_IN_HOUR){
+    return `${hours < DECIMAL ? `0${ hours}` : hours}H ${minutes < DECIMAL ? `0${ minutes}` : minutes}M`;
+  } else if (diffMinutes > HOURS_IN_DAY * MINUTES_IN_HOUR){
     return `${days}D
-            ${hours < 10 ? `0${ hours}` : hours}H
-            ${minutes < 10 ? `0${ minutes}` : minutes}M`;
+            ${hours < DECIMAL ? `0${ hours}` : hours}H
+            ${minutes < DECIMAL ? `0${ minutes}` : minutes}M`;
   }
 
 
@@ -52,27 +55,20 @@ function isPointExpired(dateTo) {
   return dayjs(dateTo).isBefore(now);
 }
 
-function comparePrice(a,b){
-  return parseFloat(b.basePrice) - parseFloat(a.basePrice);
-}
-function compareTime(a,b){
-  return parseFloat(b.basePrice) - parseFloat(a.basePrice);
-}
-
 //Функции сравнения при сортировке
-function sortDay(pointA, pointB) {
+function sortByDay(pointA, pointB) {
   return dayjs(pointA.dateFrom).diff(dayjs(pointB.dateFrom));
 }
 
-function sortTime(pointA, pointB) {
+function sortByTime(pointA, pointB) {
   return pointB.time - pointA.time;
 }
-function sortPrice(pointA, pointB) {
+function sortByPrice(pointA, pointB) {
   return pointB.basePrice - pointA.basePrice;
 }
 
 
-export{humanizeDate,capitalize,isPointToday, isPointWillBe, isPointExpired,comparePrice,compareTime,sortDay,sortTime,
-  sortPrice,DATE_FORMAT_WITHOUT_TIME,DATE_FORMAT,
-  humanizeDiffDates,addMinutes,DATE_FORMAT_ONLY_TIME
+export{humanizeDate,capitalize,isPointToday, isPointWillBe, isPointExpired,sortByDay,sortByTime,
+  sortByPrice,DATE_FORMAT,
+  humanizeDiffDates,addMinutes
 };

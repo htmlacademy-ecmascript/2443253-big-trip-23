@@ -1,7 +1,7 @@
 import Observable from '../framework/observable.js';
 import {addMinutes} from '../utils/point.js';
 import {DEFAULT_TYPE_TRIP} from '../const.js';
-import {UpdateType} from '../const.js';
+import {UpdateType,MIN_MINUTES_TRIP_POINT} from '../const.js';
 import dayjs from 'dayjs';
 
 const POINT_COUNT = 5;
@@ -10,7 +10,7 @@ const POINT_COUNT = 5;
 const BLANK_POINT = {
   basePrice: 0,
   dateFrom: new Date(),
-  dateTo: addMinutes(new Date(),10),
+  dateTo: addMinutes(new Date(),MIN_MINUTES_TRIP_POINT),
   destination: {name:'', town: '', pictures:[]},
   isFavorite: false,
   availableOffers: [],
@@ -52,7 +52,7 @@ export default class PointsModel extends Observable{
       this.#points = points.map((point) => this.#adaptToClient(point));
 
 
-    } catch(err) {
+    } catch(error) {
       this.#destinations = [];
       isSuccessLoad = false;
     }
@@ -150,7 +150,7 @@ export default class PointsModel extends Observable{
       dateTo: point['date_to'] !== null ? new Date(point['date_to']) : point['date_to'], // На клиенте дата хранится как экземпляр Date
       isFavorite: point['is_favorite'],
       availableOffers : this.adaptToClientAvailableOffers(point.type),
-      destination : this.adaptToClientDestination(this.#destinations.find((dest) => dest.id === point.destination)),
+      destination : this.adaptToClientDestination(this.#destinations.find((destination) => destination.id === point.destination)),
       offers : this.#adaptToClientOffers(point,this.#offers)
     };
 

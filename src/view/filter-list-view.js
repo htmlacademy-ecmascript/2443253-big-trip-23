@@ -1,5 +1,6 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import {capitalize} from '..//utils/point.js';
+import {LABEL_TAG} from '../const.js';
 
 
 export default class FilterListView extends AbstractView{
@@ -14,7 +15,7 @@ export default class FilterListView extends AbstractView{
     this.#filters = filters;
     this.#filterEventClick = onFilterTypeChange;
     this.#currentFilterType = currentFilterType;
-    this.element.addEventListener('click', this.#filterClickHandler);
+    this.element.addEventListener('click', this.#filterButtonClickHandler);
   }
 
   get template() {
@@ -37,9 +38,9 @@ export default class FilterListView extends AbstractView{
   }
 
 
-  #filterClickHandler = (evt)=> {
+  #filterButtonClickHandler = (evt)=> {
     this.#currentFilterType = evt.target.dataset.filterType;
-    if (evt.target.tagName !== 'LABEL'){
+    if (evt.target.tagName !== LABEL_TAG){
       return;
     }
     const count = this.#filters.find((filter) => filter.type === this.#currentFilterType).count;
